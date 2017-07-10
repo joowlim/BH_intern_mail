@@ -1,5 +1,7 @@
-import imaplib, email, base64, mimetypes, pymysql, os
+import imaplib, email, base64, mimetypes, os, datetime 
 from email.header import decode_header
+
+month_name_list = ["dummy", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 class Mail:
 	# to, attachment is a list, remainder is string
@@ -59,16 +61,26 @@ def main():
 				# set 'subject', 'from', 'to'
 				to_decode = decode_header(msg['subject'])
 				title = decode_if_byte(to_decode[0][0], to_decode[0][1])
+				
 				to_decode = decode_header(msg['from'])
 				from_ = decode_if_byte(to_decode[0][0], to_decode[0][1])
+
+				to_decode = decode_header(msg['date'])
+				mail_date = decode_if_byte(to_decode[0][0], to_decode[0][1]).split()
+				day = int(mail_date[1])
+				month = month_name_list.index(mail_date[2])
+				year = int(mail_date[3])
+				time = mail_date[4].split(":")
+				dt = datetime.datetime(year, month, day, int(time[0]), int(time[1]), int(time[2]))
+				mail_date = dt.strftime('%Y-%m-%d %H:%M:%S')
+
 				to_decode = decode_header(msg['to'])
 				to = decode_if_byte(to_decode[0][0], to_decode[0][1])
 				if ", " in to:
 					to = to.split(", ")
 				else:
 					to = [to]
-				to_decode = decode_header(msg['date'])
-				mail_date = decode_if_byte(to_decode[0][0], to_decode[0][1])
+				
 				try:
 					to_decode = decode_header(msg['cc'])
 					cc = decode_if_byte(to_decode[0][0], to_decode[0][1])
@@ -79,6 +91,7 @@ def main():
 				except:
 					cc = []
 				to = to + cc # concatenate reciever and cc
+
 				# inner text
 				inner_text = decode_if_byte(get_text(msg), 'utf-8')
 				
