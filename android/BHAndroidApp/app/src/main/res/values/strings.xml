@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">My Application</string>
+
+
+    <string name="search_guide_subject">제목 : </string>
+    <string name="search_guide_sender">From : </string>
+    <string name="search_guide_receiver">To :</string>
+    <string name="search_guide_keyword">단어 : </string>
+</resources>
