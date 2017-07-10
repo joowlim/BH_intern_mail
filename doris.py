@@ -1,8 +1,5 @@
-import imaplib
-import email
+import imaplib, email, base64, mimetypes, pymysql
 from email.header import decode_header
-import base64
-import os, mimetypes
 
 def decode_if_byte(str, encoding):
 	try:
@@ -38,14 +35,14 @@ for i in messageList: # messages I want to see
 		if isinstance(response_part, tuple):
 			msg = email.message_from_bytes(response_part[1])
 
-	   	    # parse and print header
+			# parse and print header
 			for header in ['Subject', 'From', 'To']:
 				print(header + " : ", end = "")
 				to_decode = decode_header(msg[header])
 				print(decode_if_byte(to_decode[0][0], to_decode[0][1]))
 			# print message
 			print("Message : ")
-			# print(decode_if_byte(get_text(msg), 'utf-8'))
+			print(decode_if_byte(get_text(msg), 'utf-8'))
 			print("-----------------------------------------------------------")
 
 	# download attatchment
