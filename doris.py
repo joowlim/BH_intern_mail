@@ -1,4 +1,4 @@
-import imaplib, email, base64, mimetypes, pymysql
+import imaplib, email, base64, mimetypes, pymysql, os
 from email.header import decode_header
 
 class Mail:
