@@ -48,11 +48,25 @@ def main():
 	# get list of messages in inbox
 	result, data = mail.search(None, "ALL")
 	messageList = data[0].split()
+	messageList.reverse()
 
 	# list of mail instances
 	mailList = []
 
-	for i in messageList: # messages I want to see 
+	# get last parsing time
+	time_file = open('./last_time', 'r')
+	time_line = time_file.readline().strip('\n')
+	time_file.close()
+	last_parse_time = datetime.datetime(int(time_line.split('-')[0]),
+						int(time_line.split('-')[1]),
+						int(time_line.split('-')[2].split()[0]),
+						int(time_line.split('-')[2].split()[1].split(":")[0]),
+						int(time_line.split('-')[2].split()[1].split(":")[1]),
+						int(time_line.split('-')[2].split()[1].split(":")[2]))
+	parse_end = False
+
+	last_time_saved = False
+	for i in messageList: # messages I want to see
 		typ, msg_data = mail.fetch(i, '(RFC822)')
 		for response_part in msg_data:
 			if isinstance(response_part, tuple):
@@ -73,6 +87,18 @@ def main():
 				time = mail_date[4].split(":")
 				dt = datetime.datetime(year, month, day, int(time[0]), int(time[1]), int(time[2]))
 				mail_date = dt.strftime('%Y-%m-%d %H:%M:%S')
+				if not last_time_saved:
+					# New mail arrived
+					if dt > last_parse_time :
+						# save last time
+						time_file = open('last_time', 'w')
+						time_file.write(str(mail_date))
+						time_file.close()
+					last_time_saved = True
+				
+				if last_parse_time >= dt :
+					parse_end = True
+					break
 
 				to_decode = decode_header(msg['to'])
 				to = decode_if_byte(to_decode[0][0], to_decode[0][1])
@@ -94,7 +120,11 @@ def main():
 
 				# inner text
 				inner_text = decode_if_byte(get_text(msg), 'utf-8')
-				
+
+		# already parsed every mail
+		if parse_end :
+			break
+		
 		# download attachment
 		attachment = []
 		
@@ -113,7 +143,7 @@ def main():
 					filename = filename.split(".")[0] + "_(" + str(file_index) + ")." + filename.split(".")[1]
 				with open(os.path.join(path, filename), 'wb') as fp:
 					attachment.append(filename)
-					fp.write(part.get_payload(decode=True))	
+					fp.write(part.get_payload(decode=True))
 
 		mail_one = Mail(from_, to, mail_date, title, inner_text, attachment)
 		mailList.append(mail_one)
