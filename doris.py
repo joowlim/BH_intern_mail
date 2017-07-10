@@ -1,4 +1,4 @@
-import imaplib, email, base64, mimetypes, os, datetime 
+import imaplib, email, base64, mimetypes, os, datetime, pymysql
 from email.header import decode_header
 
 month_name_list = ["dummy", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -117,7 +117,7 @@ def main():
 
 		mail_one = Mail(from_, to, mail_date, title, inner_text, attachment)
 		mailList.append(mail_one)
-		mail_one.printStatus()
+		#mail_one.printStatus()
 
 	for mail_instance in mailList:
                 # connect to db
@@ -125,8 +125,8 @@ def main():
 		curs = conn.cursor()
 
 		# Update mail table
-		mail_sql = "INSERT INTO mail (title, inner_text, attachment, mail_date) VALUES (%s, %s, %s, %s)" #datetime.date(y,m,d)
-		curs.execute(mail_sql, (mail_instance.title, mail_instance.inner_text, "test_NULL", mail_instance.mail_date))
+		mail_sql = "INSERT INTO mail (title, inner_text, mail_date) VALUES (%s, %s, %s)" #datetime.date(y,m,d)
+		curs.execute(mail_sql, (mail_instance.title, mail_instance.inner_text, mail_instance.mail_date))
 
 		current_row_id = curs.lastrowid
 
@@ -134,6 +134,11 @@ def main():
 		for receiver in mail_instance.to:
 			mail_log_sql = "INSERT INTO mail_log (sender, receiver, mail_id) VALUES (%s, %s, %s)"
 			curs.execute(mail_log_sql, (mail_instance.from_, receiver, str(current_row_id)))
+
+		# Update attachment table
+		for attachment_filename in mail_instance.attachment:
+			mail_attachment_sql = "INSERT INTO attachment (each_attachment, mail_id) VALUES (%s, %s)"
+			curs.execute(mail_attachment_sql, (attachment_filename, current_row_id));
 
 		# commit and close the connection
 		conn.commit()
