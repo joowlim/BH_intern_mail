@@ -84,5 +84,24 @@ def main():
 		mailList.append(mail_one)
 		mail_one.printStatus()
 
+	for mail_instance in mailList:
+                # connect to db
+		conn = pymysql.connect(host='52.221.182.124',user='root', password='root', db='intern',charset='utf8')
+		curs = conn.cursor()
+
+		# Update mail table
+		mail_sql = "INSERT INTO mail (title, inner_text, attachment, mail_date) VALUES (%s, %s, %s, %s)" #datetime.date(y,m,d)
+		curs.execute(mail_sql, (mail_instance.title, mail_instance.inner_text, "test_NULL", mail_instance.mail_date))
+
+		current_row_id = curs.lastrowid
+
+		# Update mail_log table
+		mail_log_sql = "INSERT INTO mail_log (from, to, mail_id) VALUES (%s, %s, %s)"
+		curs.execute(mail_log_sql, (mail_instance.from, mail_instance.to, current_row_id))
+
+		# commit and close the connection
+		conn.commit()
+		conn.close()
+
 if __name__ == "__main__":
 	main()
