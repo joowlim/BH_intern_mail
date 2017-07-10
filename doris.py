@@ -1,4 +1,4 @@
-import imaplib, email, base64, mimetypes, os 
+import imaplib, email, base64, mimetypes, pymysql, os
 from email.header import decode_header
 
 class Mail:
@@ -35,6 +35,8 @@ def get_text(msg):
 		return msg.get_payload(None, True)
 
 def main():
+	# START
+
 	# login
 	mail = imaplib.IMAP4_SSL('imap.gmail.com')
 	mail.login('dnflsmsdlsxjs@gmail.com','xmfnqoffjstm')
@@ -42,17 +44,17 @@ def main():
 	mail.select('inbox', readonly=True)
 
 	# get list of messages in inbox
+	result, data = mail.search(None, "ALL")
+	messageList = data[0].split()
 
+	# list of mail instances
 	mailList = []
 
-	mail_count = int(mail.select('inbox', readonly=True)[1][0], 10)
-
-	for i in range(1, mail_count+1): # messages I want to see 
-		typ, msg_data = mail.fetch(str(i), '(RFC822)')
+	for i in messageList: # messages I want to see 
+		typ, msg_data = mail.fetch(i, '(RFC822)')
 		for response_part in msg_data:
 			if isinstance(response_part, tuple):
 				msg = email.message_from_bytes(response_part[1])
-
 				
 				# set 'subject', 'from', 'to'
 				to_decode = decode_header(msg['subject'])
@@ -77,7 +79,7 @@ def main():
 				except:
 					cc = []
 				to = to + cc # concatenate reciever and cc
-				# inner text 
+				# inner text
 				inner_text = decode_if_byte(get_text(msg), 'utf-8')
 				
 		# download attachment
@@ -89,13 +91,40 @@ def main():
 			path = "./attachment/"
 			filename = part.get_filename()
 			if filename: # when there is attachment
+				# check file existence
+				if os.path.exists(path + filename):
+					# create numbering
+					file_index = 1
+					while os.path.exists(path + filename.split(".")[0] + "_[" + str(file_index) + "]." + filename.split(".")[1]):
+						file_index += 1
+					filename = filename.split(".")[0] + "_(" + str(file_index) + ")." + filename.split(".")[1]
 				with open(os.path.join(path, filename), 'wb') as fp:
-					attachment.append(path+filename)
+					attachment.append(filename)
 					fp.write(part.get_payload(decode=True))	
 
 		mail_one = Mail(from_, to, mail_date, title, inner_text, attachment)
 		mailList.append(mail_one)
 		mail_one.printStatus()
+
+	for mail_instance in mailList:
+                # connect to db
+		conn = pymysql.connect(host='52.221.182.124',user='root', password='root', db='intern',charset='utf8')
+		curs = conn.cursor()
+
+		# Update mail table
+		mail_sql = "INSERT INTO mail (title, inner_text, attachment, mail_date) VALUES (%s, %s, %s, %s)" #datetime.date(y,m,d)
+		curs.execute(mail_sql, (mail_instance.title, mail_instance.inner_text, "test_NULL", mail_instance.mail_date))
+
+		current_row_id = curs.lastrowid
+
+		# Update mail_log table
+		for receiver in mail_instance.to:
+			mail_log_sql = "INSERT INTO mail_log (sender, receiver, mail_id) VALUES (%s, %s, %s)"
+			curs.execute(mail_log_sql, (mail_instance.from_, receiver, str(current_row_id)))
+
+		# commit and close the connection
+		conn.commit()
+		conn.close()
 
 if __name__ == "__main__":
 	main()
