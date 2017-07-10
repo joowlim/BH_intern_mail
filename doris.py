@@ -46,12 +46,28 @@ for i in messageList: # messages I want to see
 			print("-----------------------------------------------------------")
 
 	# download attatchment
-	counter = 1
 	for part in msg.walk():
 		if part.get_content_maintype() == 'multipart':
 			continue
 		filename = part.get_filename()
 		if filename: # when there is attachment
 			with open(os.path.join("./attachment", filename), 'wb') as fp:
-				fp.write(part.get_payload(decode=True))	
-	
+				fp.write(part.get_payload(decode=True))
+
+# connect to db
+conn = pymysql.connect(host='52.221.182.124',user='root', password='root', db='intern',charset='utf8')
+curs = conn.cursor()
+
+# Update mail table
+mail_sql = "INSERT INTO mail (title, inner_text, attachment, mail_date) VALUES (%s, %s, %s, %s)" #datetime.date(y,m,d)
+curs.execute(mail_sql, (title, inner_text, attachment, mail_date))
+
+current_row_id = curs.lastrowid
+
+# Update mail_log table
+mail_log_sql = "INSERT INTO mail_log (from, to, mail_id) VALUES (%s, %s, %s)"
+curs.execute(mail_log_sql, (sender, reciever, current_row_id))
+
+# commit and close the connection
+conn.commit()
+conn.close()
