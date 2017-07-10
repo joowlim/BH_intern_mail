@@ -76,8 +76,15 @@ def main():
 			path = "./attachment/"
 			filename = part.get_filename()
 			if filename: # when there is attachment
+				# check file existence
+				if os.path.exists(path + filename):
+					# create numbering
+					file_index = 1
+					while os.path.exists(path + filename.split(".")[0] + "_[" + str(file_index) + "]." + filename.split(".")[1]):
+						file_index += 1
+					filename = filename.split(".")[0] + "_(" + str(file_index) + ")." + filename.split(".")[1]
 				with open(os.path.join(path, filename), 'wb') as fp:
-					attachment.append(path+filename)
+					attachment.append(filename)
 					fp.write(part.get_payload(decode=True))	
 
 		mail_one = Mail(from_, to, mail_date, title, inner_text, attachment)
