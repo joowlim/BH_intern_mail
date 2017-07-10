@@ -1,4 +1,4 @@
-import imaplib, email, base64, mimetypes, os, datetime, pymysql
+import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading
 from email.header import decode_header
 
 month_name_list = ["dummy", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -173,6 +173,13 @@ def main():
 		# commit and close the connection
 		conn.commit()
 		conn.close()
+
+	# terminate connection
+	mail.close()
+	mail.logout()
+
+	# start new connection simultaneously
+	threading.Timer(300, main).start() # in second
 
 if __name__ == "__main__":
 	main()
