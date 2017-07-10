@@ -44,17 +44,17 @@ def main():
 	mail.select('inbox', readonly=True)
 
 	# get list of messages in inbox
+	result, data = mail.search(None, "ALL")
+	messageList = data[0].split()
 
+	# list of mail instances
 	mailList = []
 
-	mail_count = int(mail.select('inbox', readonly=True)[1][0], 10)
-
-	for i in range(1, mail_count+1): # messages I want to see 
-		typ, msg_data = mail.fetch(str(i), '(RFC822)')
+	for i in messageList: # messages I want to see 
+		typ, msg_data = mail.fetch(i, '(RFC822)')
 		for response_part in msg_data:
 			if isinstance(response_part, tuple):
 				msg = email.message_from_bytes(response_part[1])
-
 				
 				# set 'subject', 'from', 'to'
 				to_decode = decode_header(msg['subject'])
@@ -96,8 +96,8 @@ def main():
 		current_row_id = curs.lastrowid
 
 		# Update mail_log table
-		mail_log_sql = "INSERT INTO mail_log (from, to, mail_id) VALUES (%s, %s, %s)"
-		curs.execute(mail_log_sql, (mail_instance.from, mail_instance.to, current_row_id))
+		mail_log_sql = "INSERT INTO mail_log (sender, receiver, mail_id) VALUES (%s, %s, %s)"
+		curs.execute(mail_log_sql, (mail_instance.from_, mail_instance.to, str(current_row_id)))
 
 		# commit and close the connection
 		conn.commit()
