@@ -29,7 +29,7 @@ public class ActivityMain extends AppCompatActivity {
 
         initVariables();
 
-
+        //asdf/
         adapter.addItem(test1);
         adapter.addItem(test2);
 
