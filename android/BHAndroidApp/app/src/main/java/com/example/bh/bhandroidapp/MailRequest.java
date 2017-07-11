@@ -26,7 +26,7 @@ public class MailRequest {
         }
     }
 
-    void requestToServer(){
+    public MailEntry requestToServer(){
         new Thread(){
             public void run(){
 
@@ -76,5 +76,7 @@ public class MailRequest {
                 }
             }
         }.start();
+
+        return new MailEntry(1, "title","sender","receiver","date","body");
     }
 }

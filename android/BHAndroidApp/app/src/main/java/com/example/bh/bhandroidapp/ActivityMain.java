@@ -1,10 +1,14 @@
 package com.example.bh.bhandroidapp;
 
+import android.content.Context;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.view.ContextThemeWrapper;
 import android.util.JsonReader;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 
@@ -16,6 +20,8 @@ import java.util.Date;
 import javax.net.ssl.HttpsURLConnection;
 
 public class ActivityMain extends AppCompatActivity {
+
+    private Context context = this;
 
     private ListView listview;
     private MailListViewAdapter adapter;
@@ -39,6 +45,30 @@ public class ActivityMain extends AppCompatActivity {
         listview = (ListView) findViewById(R.id.listview_mail_list);
         listview.setAdapter(adapter);
 
+        listview.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                MailEntry clickedMailEntry = (MailEntry)adapter.getItem(position);
+
+                String subject = clickedMailEntry.getSubject();
+                String sender = clickedMailEntry.getSender();
+                String receiver = clickedMailEntry.getReceiver();
+                String date = clickedMailEntry.getDate();
+                String innerText = clickedMailEntry.getInnerText();
+
+
+                String message = String.format("보낸이 : %s\n받는이 : %s\n날짜 : %s\n\n본문\n%s",
+                        sender,receiver,date,innerText);
+
+                AlertDialog.Builder mailDialog = new AlertDialog.Builder(ActivityMain.this);
+                mailDialog.setTitle(subject);
+                mailDialog.setMessage(message);
+                mailDialog.setPositiveButton("확인",null);
+                mailDialog.show();
+
+            }
+        });
+
         initView();
     }
     public void initView(){
@@ -52,13 +82,12 @@ public class ActivityMain extends AppCompatActivity {
         String subject = editSearchBySubject.getText().toString();
         String sender = editSearchBySender.getText().toString();
         String receiver = editSearchByReceiver.getText().toString();
-        adapter.addItem(new MailEntry(adapter.getCount() + 1,subject,sender,receiver,date.toString(),"body"));
+        String keyword = editSearchByKeyword.getText().toString();
+        adapter.addItem(new MailEntry(adapter.getCount() + 1,subject,sender,receiver,date.toString(),keyword));
         adapter.notifyDataSetChanged();
-
-
     }
     public void onClickBtnGetREST(View v){
-        mailRequest.requestToServer();
-
+        MailEntry receivedMailEntry = mailRequest.requestToServer();
+        adapter.addItem(receivedMailEntry);
     }
 }

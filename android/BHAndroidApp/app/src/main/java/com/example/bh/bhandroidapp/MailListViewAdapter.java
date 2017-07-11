@@ -63,5 +63,6 @@ public class MailListViewAdapter extends BaseAdapter {
     }
     public void addItem(MailEntry entry){
         listViewItemList.add(entry);
+        this.notifyDataSetChanged();
     }
 }
