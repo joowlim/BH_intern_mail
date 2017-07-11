@@ -4,24 +4,14 @@ import android.content.Context;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.view.ContextThemeWrapper;
-import android.util.JsonReader;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
-
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Date;
-import javax.net.ssl.HttpsURLConnection;
+
 
 public class ActivityMain extends AppCompatActivity {
-
-    private Context context = this;
 
     private ListView listview;
     private MailListViewAdapter adapter;
@@ -31,7 +21,7 @@ public class ActivityMain extends AppCompatActivity {
     private EditText editSearchByReceiver;
     private EditText editSearchByKeyword;
 
-    private MailRequest mailRequest = new MailRequest("http://echo.jsontest.com/key/value/one/two");;
+    private MailRequest mailRequest = new MailRequest("http://echo.jsontest.com/key/value/one/two",this);;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,7 +45,6 @@ public class ActivityMain extends AppCompatActivity {
                 String receiver = clickedMailEntry.getReceiver();
                 String date = clickedMailEntry.getDate();
                 String innerText = clickedMailEntry.getInnerText();
-
 
                 String message = String.format("보낸이 : %s\n받는이 : %s\n날짜 : %s\n\n본문\n%s",
                         sender,receiver,date,innerText);
@@ -87,7 +76,10 @@ public class ActivityMain extends AppCompatActivity {
         adapter.notifyDataSetChanged();
     }
     public void onClickBtnGetREST(View v){
-        MailEntry receivedMailEntry = mailRequest.requestToServer();
-        adapter.addItem(receivedMailEntry);
+        mailRequest.requestToServer();
+    }
+
+    public MailListViewAdapter getMailListAdapter(){
+        return adapter;
     }
 }
