@@ -21,12 +21,15 @@ class Mail:
 		print("inner_text : %s" %self.inner_text)
 		print("attachment : %s" %self.attachment)
 
-def decode_if_byte(str, encoding):
+def decode_if_byte(str_, encoding):
 	try:
-		if type(str) == type(b'\n'):
-			return str.decode(encoding)
+		if type(str_) == type(b'\n'):
+			if encoding != None:
+				return str_.decode(encoding)
+			else:
+				return str_.decode('utf-8')
 		else:
-			return str
+			return str_
 	except:
 		return ""
 
@@ -74,7 +77,6 @@ def filter_mail(mailList, config):
 	if config_data[3]: # receiver
 		mailList = list(filter(lambda x: equals_multi(config_data[3], x.to), mailList))
 		
-	print (mailList)
 	return mailList
 
 def main():
@@ -107,7 +109,7 @@ def main():
 	parse_end = False
 
 	last_time_saved = False
-	for i in messageList: # messages I want to see
+	for i in messageList[:3]: # messages I want to see
 		typ, msg_data = mail.fetch(i, '(RFC822)')
 		for response_part in msg_data:
 			if isinstance(response_part, tuple):
@@ -118,7 +120,9 @@ def main():
 				title = decode_if_byte(to_decode[0][0], to_decode[0][1])
 				
 				to_decode = decode_header(msg['from'])
-				from_ = decode_if_byte(to_decode[0][0], to_decode[0][1])
+				from_ = decode_if_byte(to_decode[1][0], to_decode[1][1])
+				if "<" in from_ and ">" in from_:
+					from_ = from_[from_.index("<")+1:from_.index(">")]
 
 				to_decode = decode_header(msg['date'])
 				mail_date = decode_if_byte(to_decode[0][0], to_decode[0][1]).split()
@@ -189,7 +193,7 @@ def main():
 
 		mail_one = Mail(from_, to, mail_date, title, inner_text, attachment)
 		mailList.append(mail_one)
-		mail_one.printStatus()
+		#mail_one.printStatus()
 
 	# filter mail
 	mailList = filter_mail(mailList, "./filter_config.txt")
