@@ -1,4 +1,4 @@
-import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading
+import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading, sys
 from email.header import decode_header
 
 month_name_list = ["dummy", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -21,12 +21,15 @@ class Mail:
 		print("inner_text : %s" %self.inner_text)
 		print("attachment : %s" %self.attachment)
 
-def decode_if_byte(str, encoding):
+def decode_if_byte(str_, encoding):
 	try:
-		if type(str) == type(b'\n'):
-			return str.decode(encoding)
+		if type(str_) == type(b'\n'):
+			if encoding != None:
+				return str_.decode(encoding)
+			else:
+				return str_.decode('utf-8')
 		else:
-			return str
+			return str_
 	except:
 		return ""
 
@@ -36,7 +39,47 @@ def get_text(msg):
 	else:
 		return msg.get_payload(None, True)
 
-def main():
+# return true if content contain at least one keyword from keywords
+def contains_multi(keywords, content):
+	for keyword in keywords:
+		if keyword in content:
+			return True
+	return False
+
+# return true if content is equal to at least one keyword from keywords
+def equals_multi(keywords, content):
+	for keyword in keywords:
+		if keyword == content:
+			return True
+	return False
+
+def filter_mail(mailList, config):
+	config_data = []
+	temp_data = []
+	tag = ["# subject", "# inner_text", "# sender", "# receiver", "#"]	
+
+	fp = open(config)
+	line = fp.readline()
+	for index in range(1, 5):
+		temp_data = []
+		while (line.strip() != tag[index]):
+			temp_data.append(line.strip())
+			line = fp.readline()
+		config_data.append(temp_data[1:])
+	fp.close()
+
+	if config_data[0]: # subject
+		mailList = list(filter(lambda x: contains_multi(config_data[0], x.title), mailList))
+	if config_data[1]: # inner_text
+		mailList = list(filter(lambda x: contains_multi(config_data[1], x.inner_text), mailList))
+	if config_data[2]: # sender
+		mailList = list(filter(lambda x: equals_multi(config_data[2], x.from_), mailList))
+	if config_data[3]: # receiver
+		mailList = list(filter(lambda x: equals_multi(config_data[3], x.to), mailList))
+		
+	return mailList
+
+def main(time_interval = 300):
 	# START
 
 	# login
@@ -66,7 +109,7 @@ def main():
 	parse_end = False
 
 	last_time_saved = False
-	for i in messageList: # messages I want to see
+	for i in messageList[:3]: # messages I want to see
 		typ, msg_data = mail.fetch(i, '(RFC822)')
 		for response_part in msg_data:
 			if isinstance(response_part, tuple):
@@ -77,7 +120,9 @@ def main():
 				title = decode_if_byte(to_decode[0][0], to_decode[0][1])
 				
 				to_decode = decode_header(msg['from'])
-				from_ = decode_if_byte(to_decode[0][0], to_decode[0][1])
+				from_ = decode_if_byte(to_decode[1][0], to_decode[1][1])
+				if "<" in from_ and ">" in from_:
+					from_ = from_[from_.index("<")+1:from_.index(">")]
 
 				to_decode = decode_header(msg['date'])
 				mail_date = decode_if_byte(to_decode[0][0], to_decode[0][1]).split()
@@ -87,6 +132,7 @@ def main():
 				time = mail_date[4].split(":")
 				dt = datetime.datetime(year, month, day, int(time[0]), int(time[1]), int(time[2]))
 				mail_date = dt.strftime('%Y-%m-%d %H:%M:%S')
+				
 				if not last_time_saved:
 					# New mail arrived
 					if dt > last_parse_time :
@@ -99,7 +145,7 @@ def main():
 				if last_parse_time >= dt :
 					parse_end = True
 					break
-
+				
 				to_decode = decode_header(msg['to'])
 				to = decode_if_byte(to_decode[0][0], to_decode[0][1])
 				if ", " in to:
@@ -116,7 +162,7 @@ def main():
 						cc = [cc]
 				except:
 					cc = []
-				to = to + cc # concatenate reciever and cc
+				to = to + cc # concatenate receiver and cc
 
 				# inner text
 				inner_text = decode_if_byte(get_text(msg), 'utf-8')
@@ -149,6 +195,9 @@ def main():
 		mailList.append(mail_one)
 		#mail_one.printStatus()
 
+	# filter mail
+	mailList = filter_mail(mailList, "./filter_config.txt")
+	
 	for mail_instance in mailList:
                 # connect to db
 		conn = pymysql.connect(host='52.221.182.124',user='root', password='root', db='intern',charset='utf8')
@@ -173,13 +222,40 @@ def main():
 		# commit and close the connection
 		conn.commit()
 		conn.close()
-
+	
 	# terminate connection
 	mail.close()
 	mail.logout()
 
+	# notification to user
+	print ("Mail updated!")
+
 	# start new connection simultaneously
-	threading.Timer(300, main).start() # in second
+	threading.Timer(time_interval, main).start() # in second
+
+def wrong_parameter():
+	print("Wrong parameter")
 
 if __name__ == "__main__":
-	main()
+	if len(sys.argv) == 1:
+		main()
+	elif len(sys.argv) == 2:
+		# initialize
+		if sys.argv[1] == "-i":
+			time_file = open('last_time', 'w')
+			time_file.write("1000-01-01 00:00:00")
+			time_file.close()
+		if sys.argv[1] == "-h":
+			print("python doris.py [-i | -h | -t [INT]]")
+			print("--------------------------------------")
+			print("command list : ")
+			print("\t\t-i : initialize time stamp")
+			print("\t\t-t [INT] : start program with given time interval for crawling")
+			print("\t\t-h : show help command")
+	elif len(sys.argv) == 3:
+		if sys.argv[1] == "-t":
+			main(int(sys.argv[2]))
+		else:
+			wrong_parameter()
+	else:
+		wrong_parameter()
