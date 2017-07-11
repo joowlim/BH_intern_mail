@@ -109,7 +109,7 @@ def main(time_interval = 300):
 	parse_end = False
 
 	last_time_saved = False
-	for i in messageList[:3]: # messages I want to see
+	for i in messageList: # messages I want to see
 		typ, msg_data = mail.fetch(i, '(RFC822)')
 		for response_part in msg_data:
 			if isinstance(response_part, tuple):
