@@ -1,4 +1,4 @@
-import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading
+import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading, sys
 from email.header import decode_header
 
 month_name_list = ["dummy", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -79,7 +79,7 @@ def filter_mail(mailList, config):
 		
 	return mailList
 
-def main():
+def main(time_interval = 300):
 	# START
 
 	# login
@@ -231,7 +231,31 @@ def main():
 	print ("Mail updated!")
 
 	# start new connection simultaneously
-	threading.Timer(300, main).start() # in second
+	threading.Timer(time_interval, main).start() # in second
+
+def wrong_parameter():
+	print("Wrong parameter")
 
 if __name__ == "__main__":
-	main()
+	if len(sys.argv) == 1:
+		main()
+	elif len(sys.argv) == 2:
+		# initialize
+		if sys.argv[1] == "-i":
+			time_file = open('last_time', 'w')
+			time_file.write("1000-01-01 00:00:00")
+			time_file.close()
+		if sys.argv[1] == "-h":
+			print("python doris.py [-i | -h | -t [INT]]")
+			print("--------------------------------------")
+			print("command list : ")
+			print("\t\t-i : initialize time stamp")
+			print("\t\t-t [INT] : start program with given time interval for crawling")
+			print("\t\t-h : show help command")
+	elif len(sys.argv) == 3:
+		if sys.argv[1] == "-t":
+			main(int(sys.argv[2]))
+		else:
+			wrong_parameter()
+	else:
+		wrong_parameter()
