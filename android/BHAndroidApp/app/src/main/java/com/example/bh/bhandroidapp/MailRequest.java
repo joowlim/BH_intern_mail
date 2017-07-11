@@ -19,7 +19,7 @@ public class MailRequest {
     private URL requestURL;
     private HttpURLConnection connection;
     private Context context = null;
-    private RequestAsyncTask asyncTask = new RequestAsyncTask();
+    private RequestAsyncTask asyncTask;
 
     public MailRequest(String url,Context c){
         try{
@@ -32,6 +32,7 @@ public class MailRequest {
     }
 
     public void requestToServer(){
+        asyncTask = new RequestAsyncTask();
         asyncTask.execute();
     }
 
