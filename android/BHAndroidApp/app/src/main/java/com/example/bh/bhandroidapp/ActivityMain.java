@@ -2,15 +2,21 @@ package com.example.bh.bhandroidapp;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.JsonReader;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ListView;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Date;
+import javax.net.ssl.HttpsURLConnection;
 
 public class ActivityMain extends AppCompatActivity {
 
-    MailEntry test1, test2;
     ListView listview;
     MailListViewAdapter adapter;
 
@@ -18,20 +24,13 @@ public class ActivityMain extends AppCompatActivity {
     private EditText editSearchBySender;
     private EditText editSearchByReceiver;
     private EditText editSearchByKeyword;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        test1 = new MailEntry(1, "Subject 1","sender 1", "receiver 1","2017/07/10","text 1");
-        test2 = new MailEntry(2, "Subject 2","sender 2", "receiver 2","2017/01/11","text 2");
-
         initVariables();
-
-        //asdf/
-        adapter.addItem(test1);
-        adapter.addItem(test2);
-
     }
     public void initVariables(){
         //리스트뷰 및 어댑터 setting
@@ -47,9 +46,60 @@ public class ActivityMain extends AppCompatActivity {
         editSearchByReceiver = (EditText) findViewById(R.id.edit_search_by_receiver);
         editSearchByKeyword = (EditText) findViewById(R.id.edit_search_by_keyword);
     }
-    public void onClickBtnGetREST(View v){
+    public void onClickBtnInsertData(View v){
         Date date = new Date();
-        adapter.addItem(new MailEntry(adapter.getCount() + 1,"Subject" +(adapter.getCount() + 1),"sender","receiver",date.toString(),"body"));
+        String subject = editSearchBySubject.getText().toString();
+        String sender = editSearchBySender.getText().toString();
+        String receiver = editSearchByReceiver.getText().toString();
+        adapter.addItem(new MailEntry(adapter.getCount() + 1,subject,sender,receiver,date.toString(),"body"));
         adapter.notifyDataSetChanged();
+
+
+    }
+    public void onClickBtnGetREST(View v){
+        new Thread(){
+            public void run(){
+// Create URL
+                try{
+                    URL requestURL = new URL("http://echo.jsontest.com/key/value/one/two");
+
+// Create connection
+                    HttpURLConnection myConnection =
+                            (HttpURLConnection) requestURL.openConnection();
+
+                    /*
+                    myConnection.setRequestProperty("User-Agent", "my-rest-app-v0.1");
+                    myConnection.setRequestProperty("Accept",
+                            "application/vnd.github.v3+json");
+                    myConnection.setRequestProperty("Contact-Me",
+                            "hathibelagal@example.com");*/
+
+                    if (myConnection.getResponseCode() == 200) {
+
+                        InputStream responseBody = myConnection.getInputStream();
+
+                        InputStreamReader responseBodyReader =
+                                new InputStreamReader(responseBody, "UTF-8");
+
+                        JsonReader jsonReader = new JsonReader(responseBodyReader);
+
+                        jsonReader.beginObject(); // Start processing the JSON object
+                        while (jsonReader.hasNext()) { // Loop through all keys
+                            String key = jsonReader.nextName(); // Fetch the next key
+                            Log.i("result",key + " : " +jsonReader.nextString());
+                        }
+
+                        jsonReader.close();
+                    } else {
+                        Log.e("error","responseCode is not 200");
+                    }
+                    myConnection.disconnect();
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+
+            }
+        }.start();
+
     }
 }

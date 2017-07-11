@@ -95,11 +95,22 @@
         android:layout_height="wrap_content">
 
     </LinearLayout>
-    <Button
-        android:onClick="onClickBtnGetREST"
-        android:text="REST GET"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Button
+            android:onClick="onClickBtnInsertData"
+            android:text="INSERT DATA"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:onClick="onClickBtnGetREST"
+            android:text="REQUEST"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
     <ListView
         android:id="@+id/listview_mail_list"
         android:layout_width="match_parent"
