@@ -1,8 +1,8 @@
-#밸런스히어로 Development Intern Project
+# 밸런스히어로 Development Intern Project
 
-###참여자 : Aleph, Dori, Kate, Rev
+### 참여자 : Aleph, Dori, Kate, Rev
 ---
-####1. filtering 규칙
+#### 1. filtering 규칙
 
 filter_config.txt 에 맞추어 필터링.
 제목과 본문 내용은 필터링 하고 싶은 단어들 중 적어도 하나 포함되면 통과.
