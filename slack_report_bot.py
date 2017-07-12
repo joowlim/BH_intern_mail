@@ -20,7 +20,7 @@ class SlackBot:
     def sendPlainMessage(self, _channel, _title, _text):
         self.slacker.chat.post_message(_channel, _title, _text)
 
-token = 'xoxb-210760362642-wnqRaOX86vYOuz3rpbMOVC02'
+token = 'xoxb-211506158546-FQqCVpwyNYBqUsKZJcqxf3l9'
 
 slackBot = SlackBot(token)
-
+slackBot.sendPlainMessage('#intern_test_dev','sdf','fdsf')
