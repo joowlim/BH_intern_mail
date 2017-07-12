@@ -104,10 +104,7 @@ public class ActivityMain extends AppCompatActivity {
 
         }
     };
-
-//    public void onClickBtnInsertData(View v){
-//
-//    }
+    
     public void searchItemWithFilter(){
         Date date = new Date();
         String subject = editSearchBySubject.getText().toString();
