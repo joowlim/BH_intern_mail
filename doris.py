@@ -124,7 +124,7 @@ def main(time_interval = 300):
 	last_time_saved = False
 
 	# initialize slack bot
-	token = 'xoxb-210760362642-wnqRaOX86vYOuz3rpbMOVC02'
+	token = 'xoxb-211506158546-FQqCVpwyNYBqUsKZJcqxf3l9'
 	slackBot = SlackBot(token)
 	
 	for i in messageList: # messages I want to see
@@ -241,7 +241,7 @@ def main(time_interval = 300):
 		conn.close()
 		
 		# post on slack
-		slackBot.sendPlainMessage('#general', mail_instance.title, mail_instance.inner_text)
+		slackBot.sendPlainMessage('#test_dev_intern', mail_instance.title, mail_instance.inner_text)
 	
 	# terminate connection
 	mail.close()
