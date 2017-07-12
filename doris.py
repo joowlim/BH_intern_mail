@@ -72,7 +72,11 @@ def filter_mail(mailList, config):
 	temp_data = []
 	tag = ["# subject", "# inner_text", "# sender", "# receiver", "#"]	
 
-	fp = open(config)
+	try:
+		fp = open(config)
+	except IOError:
+		sys.exit("Could not read file : %s" % config)
+
 	line = fp.readline()
 	for index in range(1, 5):
 		temp_data = []
@@ -81,6 +85,7 @@ def filter_mail(mailList, config):
 			line = fp.readline()
 		config_data.append(temp_data[1:])
 	fp.close()
+	
 
 	if config_data[0]: # subject
 		mailList = list(filter(lambda x: contains_multi(config_data[0], x.title), mailList))
@@ -94,8 +99,6 @@ def filter_mail(mailList, config):
 	return mailList
 
 def main(time_interval = 300):
-	# START
-
 	# login
 	mail = imaplib.IMAP4_SSL('imap.gmail.com')
 	mail.login('dnflsmsdlsxjs@gmail.com','xmfnqoffjstm')
@@ -111,9 +114,14 @@ def main(time_interval = 300):
 	mailList = []
 
 	# get last parsing time
-	time_file = open('./last_time', 'r')
+	try:
+		time_file = open('./last_time', 'r')
+	except IOError:
+		sys.exit("Could not read file : %s" % "./last_time")
+	
 	time_line = time_file.readline().strip('\n')
 	time_file.close()
+
 	last_parse_time = datetime.datetime(int(time_line.split('-')[0]),
 						int(time_line.split('-')[1]),
 						int(time_line.split('-')[2].split()[0]),
@@ -125,8 +133,7 @@ def main(time_interval = 300):
 	last_time_saved = False
 
 	# initialize slack bot
-	token_file = open('slack_token.txt')
-	token = token_file.readline().strip('\n');
+	token = 'xoxb-211506158546-FQqCVpwyNYBqUsKZJcqxf3l9'
 	slackBot = SlackBot(token)
 	
 	for i in messageList: # messages I want to see
@@ -193,7 +200,7 @@ def main(time_interval = 300):
 		
 		# download attachment
 		attachment = []
-		
+
 		for part in msg.walk():
 			if part.get_content_maintype() == 'multipart':
 				continue
@@ -204,19 +211,22 @@ def main(time_interval = 300):
 				if os.path.exists(path + filename):
 					# create numbering
 					file_index = 1
-					while os.path.exists(path + filename.split(".")[0] + "_(" + str(file_index) + ")." + filename.split(".")[1]):
+					while os.path.exists(path + filename.split(".")[0] + "_[" + str(file_index) + "]." + filename.split(".")[1]):
 						file_index += 1
 					filename = filename.split(".")[0] + "_(" + str(file_index) + ")." + filename.split(".")[1]
-				with open(os.path.join(path, filename), 'wb') as fp:
-					attachment.append(filename)
-					fp.write(part.get_payload(decode=True))
+				try:
+					with open(os.path.join(path, filename), 'wb') as fp:
+						attachment.append(filename)
+						fp.write(part.get_payload(decode=True))
+				except IOError:
+					sys.exit("Could not find directory : %s" % path)
 
 		mail_one = Mail(from_, to, mail_date, title, inner_text, attachment)
 		mailList.append(mail_one)
 
 	# filter mail
 	mailList = filter_mail(mailList, "./filter_config.txt")
-
+	
 	for mail_instance in mailList:
                 # connect to db
 		conn = pymysql.connect(host='localhost',user='root', password='root', db='intern',charset='utf8')
@@ -248,7 +258,7 @@ def main(time_interval = 300):
 	# terminate connection
 	mail.close()
 	mail.logout()
-
+	
 	# notification to user
 	print ("Mail updated!")
 
@@ -258,28 +268,60 @@ def main(time_interval = 300):
 def wrong_parameter():
 	print("Wrong parameter")
 
+def run_i():
+	time_file = open('last_time', 'w')
+	time_file.write("1000-01-01 00:00:00")
+	time_file.close()
+
+def run_h():
+	print("python doris.py [-i | -h | -t [INT]] (python = python version 3)")
+	print("--------------------------------------")
+	print("command list : ")
+	print("\t\t-i : initialize time stamp")
+	print("\t\t-t [INT] : start program with given time interval for crawling (in second)")
+	print("\t\t-h : show help command")
+
+def run_t(t):
+	main(t)
+
+def is_int(s):
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False
+
 if __name__ == "__main__":
+	# without argument
 	if len(sys.argv) == 1:
 		main()
+
+	# one argument : -i, -h (for -h option, only works alone)
 	elif len(sys.argv) == 2:
 		# initialize
 		if sys.argv[1] == "-i":
-			time_file = open('last_time', 'w')
-			time_file.write("1000-01-01 00:00:00")
-			time_file.close()
-
+			run_i()
+			main()
 		elif sys.argv[1] == "-h":
-			print("python doris.py [-i | -h | -t [INT]] (python = python version 3)")
-			print("--------------------------------------")
-			print("command list : ")
-			print("\t\t-i : initialize time stamp")
-			print("\t\t-t [INT] : start program with given time interval for crawling (in second)")
-			print("\t\t-h : show help command")
+			run_h()
 		else:
 			wrong_parameter()
+
+	# two argument : -t [INT]
 	elif len(sys.argv) == 3:
-		if sys.argv[1] == "-t":
-			main(int(sys.argv[2]))
+		if sys.argv[1] == "-t" and is_int(sys.argv[2]):
+			run_t(int(sys.argv[2]))
+		else:
+			wrong_parameter()
+
+	# three argument : -t [INT] -i, -i -t [INT]
+	elif len(sys.argv) == 4:
+		if (sys.argv[1] == "-t" and is_int(sys.argv[2]) and sys.argv[3] == "-i"):
+			run_i()
+			run_t(int(sys.argv[2]))
+		elif (sys.argv[1] == "-i" and sys.argv[2] == "-t" and is_int(sys.argv[3])):
+			run_i()
+			run_t(int(sys.argv[3]))
 		else:
 			wrong_parameter()
 	else:
