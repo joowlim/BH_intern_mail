@@ -1,7 +1,28 @@
 import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading, sys
 from email.header import decode_header
+from slacker import Slacker
 
 month_name_list = ["dummy", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+class SlackBot:
+
+    def __init__(self,token):
+        self.slacker = Slacker(token)
+
+    def sendCustomizedMessage(self,_channel, _title, _text, _pretext='', _link='',):
+        attachment = dict()
+        attachment['pretext'] = _pretext
+        attachment['title'] = _title
+        attachment['title_link'] = _link
+        attachment['fallback'] = _text
+        attachment['text'] = _text
+        attachment['mrkdwn_in'] = ['text', 'title_link']
+        att = [attachment]
+
+        self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
+
+    def sendPlainMessage(self, _channel, _title, _text):
+        self.slacker.chat.post_message(_channel, _title, _text)
 
 class Mail:
 	# to, attachment is a list, remainder is string
@@ -101,6 +122,11 @@ def main(time_interval = 300):
 	parse_end = False
 
 	last_time_saved = False
+
+	# initialize slack bot
+	token = 'xoxb-210760362642-wnqRaOX86vYOuz3rpbMOVC02'
+	slackBot = SlackBot(token)
+	
 	for i in messageList: # messages I want to see
 		typ, msg_data = mail.fetch(i, '(RFC822)')
 		for response_part in msg_data:
@@ -185,7 +211,6 @@ def main(time_interval = 300):
 
 		mail_one = Mail(from_, to, mail_date, title, inner_text, attachment)
 		mailList.append(mail_one)
-		#mail_one.printStatus()
 
 	# filter mail
 	mailList = filter_mail(mailList, "./filter_config.txt")
@@ -214,6 +239,9 @@ def main(time_interval = 300):
 		# commit and close the connection
 		conn.commit()
 		conn.close()
+		
+		# post on slack
+		slackBot.sendPlainMessage('#general', mail_instance.title, mail_instance.inner_text)
 	
 	# terminate connection
 	mail.close()
