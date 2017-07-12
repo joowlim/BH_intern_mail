@@ -133,7 +133,11 @@ def main(time_interval = 300):
 	last_time_saved = False
 
 	# initialize slack bot
-	token = 'xoxb-211506158546-FQqCVpwyNYBqUsKZJcqxf3l9'
+	try:
+		token_file = open('slack_token.txt')
+	except IOError:
+		sys.exit("Could not read file : %s" % "./slack_tocken.txt")
+	token = token_file.readline().strip('\n')
 	slackBot = SlackBot(token)
 	
 	for i in messageList: # messages I want to see
@@ -211,7 +215,7 @@ def main(time_interval = 300):
 				if os.path.exists(path + filename):
 					# create numbering
 					file_index = 1
-					while os.path.exists(path + filename.split(".")[0] + "_[" + str(file_index) + "]." + filename.split(".")[1]):
+					while os.path.exists(path + filename.split(".")[0] + "_(" + str(file_index) + ")." + filename.split(".")[1]):
 						file_index += 1
 					filename = filename.split(".")[0] + "_(" + str(file_index) + ")." + filename.split(".")[1]
 				try:
