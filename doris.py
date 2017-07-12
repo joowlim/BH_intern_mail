@@ -126,7 +126,7 @@ def main(time_interval = 300):
 
 	# initialize slack bot
 	token_file = open('slack_token.txt')
-	token = token_file.readline();
+	token = token_file.readline().strip('\n');
 	slackBot = SlackBot(token)
 	
 	for i in messageList: # messages I want to see
