@@ -239,7 +239,7 @@ if __name__ == "__main__":
 			time_file.close()
 
 		elif sys.argv[1] == "-h":
-			print("python doris.py [-i | -h | -t [INT]]")
+			print("python doris.py [-i | -h | -t [INT]] (python = python version 3)")
 			print("--------------------------------------")
 			print("command list : ")
 			print("\t\t-i : initialize time stamp")
