@@ -22,8 +22,7 @@ class SlackBot:
         self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
 
     def sendPlainMessage(self, _channel, _title, _text):
-        post_text = "Title : " + _title + "\n" + "Text : " + _text
-        post_text = post_text[:46] + " ..."
+        post_text = "Title : " + _title + "\n" + "Text : " + _text[:46] + " ..."
         self.slacker.chat.post_message(_channel, post_text, "Mail_parrot")
 
 class Mail:
