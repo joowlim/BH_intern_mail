@@ -20,6 +20,7 @@
             />
         <EditText
             android:padding="@dimen/search_edit_text_padding"
+            android:textSize="@dimen/search_edit_text_size"
             android:id="@+id/edit_search_by_subject"
             android:layout_weight="9"
             android:layout_width="0dp"
@@ -40,6 +41,7 @@
             android:layout_weight="2"
             />
         <EditText
+            android:textSize="@dimen/search_edit_text_size"
             android:padding="@dimen/search_edit_text_padding"
             android:id="@+id/edit_search_by_sender"
             android:layout_weight="9"
@@ -59,6 +61,7 @@
             android:layout_weight="2"
             />
         <EditText
+            android:textSize="@dimen/search_edit_text_size"
             android:padding="@dimen/search_edit_text_padding"
             android:id="@+id/edit_search_by_receiver"
             android:layout_weight="9"
@@ -78,6 +81,7 @@
             android:layout_weight="2"
             />
         <EditText
+            android:textSize="@dimen/search_edit_text_size"
             android:padding="@dimen/search_edit_text_padding"
             android:id="@+id/edit_search_by_keyword"
             android:layout_weight="9"
@@ -90,9 +94,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <Button
+            android:layout_weight="1"
+            android:padding="@dimen/btn_padding"
             android:onClick="onClickBtnGetREST"
             android:text="REQUEST"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content" />
+        <Button
+            android:layout_weight="1"
+            android:padding="@dimen/btn_padding"
+            android:onClick="onClickBtnResetFilter"
+            android:text="Reset Filter"
+            android:layout_width="0dp"
             android:layout_height="wrap_content" />
     </LinearLayout>
 

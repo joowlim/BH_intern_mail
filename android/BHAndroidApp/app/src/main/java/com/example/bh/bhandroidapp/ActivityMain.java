@@ -23,7 +23,7 @@ public class ActivityMain extends AppCompatActivity {
     private EditText editSearchByReceiver;
     private EditText editSearchByKeyword;
 
-    private MailRequest mailRequest = new MailRequest("http://echo.jsontest.com/key/value/one/two",this);;
+    private MailRequest mailRequest ;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,11 +32,12 @@ public class ActivityMain extends AppCompatActivity {
         initVariables();
     }
     public void initVariables(){
+
+
         //리스트뷰 및 어댑터 setting
         adapter = new MailListViewAdapter();
         listview = (ListView) findViewById(R.id.listview_mail_list);
         listview.setAdapter(adapter);
-
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener(){
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -60,19 +61,12 @@ public class ActivityMain extends AppCompatActivity {
             }
         });
 
-        adapter.addItemToAll(new MailEntry(1,"title","hello@naver.com","receiver","date","text"));
-        adapter.addItemToAll(new MailEntry(2,"sfdvca","sdfefw@gmail.com","receiver","date","text"));
-        adapter.addItemToAll(new MailEntry(3,"gdwa","fefs@balancehero.com","receiver","date","text"));
-        adapter.addItemToAll(new MailEntry(4,"sdzx","fefsfaefag","receiver","date","text"));
-        adapter.addItemToAll(new MailEntry(5,"rgrgw","ghhea","receiver","date","text"));
-        adapter.addItemToAll(new MailEntry(6,"xcvz","zcvx","receiver","date","text"));
-        adapter.addItemToAll(new MailEntry(7,"whharga","xcvwr","receiver","date","text"));
-        adapter.addItemToAll(new MailEntry(8,"xcvx","wefwa","receiver","date","text"));
-        adapter.addItemToAll(new MailEntry(9,"xcvw","efefef","receiver","date","text"));
-        adapter.addItemToAll(new MailEntry(10,"wefwef","efsfsz","receiver","date","text"));
-
-
         initView();
+
+        mailRequest = new MailRequest("http://52.221.182.124/api.php/dnflsmsdlsxjs@gmail.com",this);
+        mailRequest.requestToServer();
+
+
     }
     public void initView(){
         editSearchBySubject = (EditText)findViewById(R.id.edit_search_by_subject);
@@ -114,6 +108,7 @@ public class ActivityMain extends AppCompatActivity {
 
         if(subject.equals("") && sender.equals("") && receiver.equals("") && keyword.equals("")) {
             adapter.resetItem();
+            adapter.notifyDataSetChanged();
             return;
         }
         adapter.clearViewItem();
@@ -123,7 +118,6 @@ public class ActivityMain extends AppCompatActivity {
                 adapter.addItem((MailEntry)adapter.getItemFromOrigin(i));
             }
         }
-        //adapter.addItem(new MailEntry(adapter.getCount() + 1,subject,sender,receiver,date.toString(),keyword));
         adapter.notifyDataSetChanged();
     }
     public boolean isMatch(String subject,String sender,String receiver,String keyword,MailEntry entry){
@@ -149,7 +143,13 @@ public class ActivityMain extends AppCompatActivity {
     public void onClickBtnGetREST(View v){
         mailRequest.requestToServer();
     }
-
+    public void onClickBtnResetFilter(View v){
+        editSearchBySubject.setText("");
+        editSearchBySender.setText("");
+        editSearchByReceiver.setText("");
+        editSearchByKeyword.setText("");
+        searchItemWithFilter();
+    }
     public MailListViewAdapter getMailListAdapter(){
         return adapter;
     }

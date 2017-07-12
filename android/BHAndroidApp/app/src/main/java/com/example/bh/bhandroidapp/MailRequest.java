@@ -1,17 +1,21 @@
 package com.example.bh.bhandroidapp;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
-import android.renderscript.ScriptGroup;
-import android.util.JsonReader;
+import android.os.Handler;
 import android.util.Log;
+import android.widget.Toast;
 
-import java.io.BufferedInputStream;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 
 
 /**
@@ -23,6 +27,8 @@ public class MailRequest {
     private HttpURLConnection connection;
     private Context context = null;
     private RequestAsyncTask asyncTask;
+    private Handler handler = new Handler();
+    private ProgressDialog asyncDialog;
 
     public MailRequest(String url,Context c){
         try{
@@ -32,6 +38,7 @@ public class MailRequest {
             e.printStackTrace();
         }
         context = c;
+        asyncDialog = new ProgressDialog(context);
     }
 
     public void requestToServer(){
@@ -39,76 +46,113 @@ public class MailRequest {
         asyncTask.execute();
     }
 
-    protected class RequestAsyncTask extends AsyncTask<String,String,MailEntry>{
+    protected class RequestAsyncTask extends AsyncTask<String,String,ArrayList<MailEntry>>{
 
         @Override
-        protected void onPostExecute(final MailEntry mailEntry) {
-            super.onPostExecute(mailEntry);
-            ((ActivityMain)context).getMailListAdapter().clearItemAll();
-            ((ActivityMain)context).getMailListAdapter().addItemToAll(mailEntry);
-            ((ActivityMain)context).getMailListAdapter().notifyDataSetChanged();
+        protected void onPreExecute(){
+            super.onPreExecute();
+
+            asyncDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            asyncDialog.setTitle("잠시만 기다려 주세요...");
+            asyncDialog.setMessage("메일을 받아오는 중 입니다...");
+            asyncDialog.show();
         }
-
         @Override
-        protected MailEntry doInBackground(String... params) {
+        protected void onPostExecute(final ArrayList<MailEntry> mailEntry) {
+            super.onPostExecute(mailEntry);
+            if(mailEntry == null) return;
+
+            MailListViewAdapter adapter = ((ActivityMain)context).getMailListAdapter();
+
+            adapter.clearItemAll();
+            for(int i = 0 ;i<mailEntry.size();i++){
+                adapter.addItemToAll(mailEntry.get(i));
+            }
+
+            adapter.notifyDataSetChanged();
+            asyncDialog.dismiss();
+        }
+        protected void dismissProgressDialog(){
+            handler.post(new Runnable(){
+                public void run(){
+                    asyncDialog.dismiss();
+                }
+            });
+        }
+        @Override
+        protected ArrayList<MailEntry> doInBackground(String... params) {
+            ArrayList<MailEntry> retEntries = new ArrayList<MailEntry>();
             try{
                 connection = (HttpURLConnection) requestURL.openConnection();
             }catch(Exception e){
                 Log.e("requestToServer()","openConnection error");
+                dismissProgressDialog();
                 e.printStackTrace();
             }
 
             try{
                 if(connection.getResponseCode() != 200){
                     connection.disconnect();
+
+                    handler.post(new Runnable(){
+                        public void run(){
+                            Toast.makeText(context,"서버가 응답하지 않습니다.",Toast.LENGTH_SHORT).show();
+                            dismissProgressDialog();
+                        }
+                    });
                     return null;
                 }
             }catch(Exception e){
+                dismissProgressDialog();
                 Log.e("requestToServer()","getResponseCode");
                 e.printStackTrace();
             }
 
-            InputStream responseBody=null;
-            InputStreamReader responseBodyReader=null;
-            JsonReader jsonReader=null;
-
             try{
 
-/*
                 InputStream bis = connection.getInputStream();
                 BufferedReader br = new BufferedReader(new InputStreamReader(bis));
                 StringBuffer sb = new StringBuffer();
                 String inputLine = "";
+
                 while((inputLine = br.readLine() ) != null){
                     sb.append(inputLine);
                 }
-                Log.i("asdf",sb.toString());*/
 
-                responseBody = connection.getInputStream();
-                responseBodyReader =
-                        new InputStreamReader(responseBody, "UTF-8");
+                JSONArray jsonArray = new JSONArray(sb.toString());
+                if(jsonArray.length() == 0){
+                    handler.post(new Runnable(){
+                        public void run(){
+                            Toast.makeText(context,"메일이 없습니다.", Toast.LENGTH_SHORT).show();
+                            dismissProgressDialog();
+                        }
+                    });
 
-                jsonReader = new JsonReader(responseBodyReader);
+                    return null;
+                }
+                for(int i = 0 ;i<jsonArray.length();i++){
+                    JSONObject tempJsonObject = jsonArray.getJSONObject(i);
+                    MailEntry tempMailEntry = new MailEntry(i,tempJsonObject.getString("title"),tempJsonObject.getString("sender"),
+                            tempJsonObject.getString("receiver"),tempJsonObject.getString("mail_date"),tempJsonObject.getString("inner_text"));
+
+                    retEntries.add(tempMailEntry);
+                }
+
             }catch(Exception e){
+                dismissProgressDialog();
                 Log.e("requestToServer()","assign response, reader err");
                 e.printStackTrace();
             }
 
             try{
-                jsonReader.beginObject();
-                while(jsonReader.hasNext()){
-                    String key = jsonReader.nextName();
-                    String value = jsonReader.nextString();
-                    Log.i("result",key + " : " + value);
-                }
-                jsonReader.close();
                 connection.disconnect();
             }catch(Exception e){
+                dismissProgressDialog();
                 Log.e("requestToServer()","print json result err");
                 e.printStackTrace();
             }
 
-            return new MailEntry(1,"a","b","c","d","e");
+            return retEntries;
         }
     }
 
