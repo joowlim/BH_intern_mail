@@ -13,14 +13,6 @@ class Mail:
 		self.inner_text = inner_text
 		self.attachment = attachment
 
-	def printStatus(self):
-		print("from : %s" %self.from_)
-		print("to : %s" %self.to)
-		print("mail_date : %s" %self.mail_date)
-		print("title : %s" %self.title)
-		print("inner_text : %s" %self.inner_text)
-		print("attachment : %s" %self.attachment)
-
 def decode_if_byte(str_, encoding):
 	try:
 		if type(str_) == type(b'\n'):
@@ -197,10 +189,10 @@ def main(time_interval = 300):
 
 	# filter mail
 	mailList = filter_mail(mailList, "./filter_config.txt")
-	
+
 	for mail_instance in mailList:
                 # connect to db
-		conn = pymysql.connect(host='52.221.182.124',user='root', password='root', db='intern',charset='utf8')
+		conn = pymysql.connect(host='localhost',user='root', password='root', db='intern',charset='utf8')
 		curs = conn.cursor()
 
 		# Update mail table
@@ -245,13 +237,16 @@ if __name__ == "__main__":
 			time_file = open('last_time', 'w')
 			time_file.write("1000-01-01 00:00:00")
 			time_file.close()
-		if sys.argv[1] == "-h":
+
+		elif sys.argv[1] == "-h":
 			print("python doris.py [-i | -h | -t [INT]]")
 			print("--------------------------------------")
 			print("command list : ")
 			print("\t\t-i : initialize time stamp")
-			print("\t\t-t [INT] : start program with given time interval for crawling")
+			print("\t\t-t [INT] : start program with given time interval for crawling (in second)")
 			print("\t\t-h : show help command")
+		else:
+			wrong_parameter()
 	elif len(sys.argv) == 3:
 		if sys.argv[1] == "-t":
 			main(int(sys.argv[2]))
