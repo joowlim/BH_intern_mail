@@ -2,9 +2,12 @@ package com.example.bh.bhandroidapp;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.renderscript.ScriptGroup;
 import android.util.JsonReader;
 import android.util.Log;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -70,9 +73,21 @@ public class MailRequest {
             JsonReader jsonReader=null;
 
             try{
+
+/*
+                InputStream bis = connection.getInputStream();
+                BufferedReader br = new BufferedReader(new InputStreamReader(bis));
+                StringBuffer sb = new StringBuffer();
+                String inputLine = "";
+                while((inputLine = br.readLine() ) != null){
+                    sb.append(inputLine);
+                }
+                Log.i("asdf",sb.toString());*/
+
                 responseBody = connection.getInputStream();
                 responseBodyReader =
                         new InputStreamReader(responseBody, "UTF-8");
+
                 jsonReader = new JsonReader(responseBodyReader);
             }catch(Exception e){
                 Log.e("requestToServer()","assign response, reader err");
