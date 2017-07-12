@@ -41,7 +41,8 @@ public class MailRequest {
         @Override
         protected void onPostExecute(final MailEntry mailEntry) {
             super.onPostExecute(mailEntry);
-            ((ActivityMain)context).getMailListAdapter().addItem(mailEntry);
+            ((ActivityMain)context).getMailListAdapter().clearItemAll();
+            ((ActivityMain)context).getMailListAdapter().addItemToAll(mailEntry);
             ((ActivityMain)context).getMailListAdapter().notifyDataSetChanged();
         }
 
