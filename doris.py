@@ -21,8 +21,8 @@ class SlackBot:
 
         self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
 
-    def sendPlainMessage(self, _channel, _title, _text):
-        post_text = "Title : " + _title + "\n" + "Text : " + _text[:46] + " ..."
+    def sendPlainMessage(self, _channel, _title, _text, _date):
+        post_text = "Title : " + _title + "\nDate : " + _date + "\nText : " + _text[:46] + " ...\n" + "----------------------------------------------------------------------"
         self.slacker.chat.post_message(_channel, post_text, "Mail_parrot")
 
 class Mail:
@@ -242,7 +242,7 @@ def main(time_interval = 300):
 		conn.close()
 		
 		# post on slack
-		slackBot.sendPlainMessage('#test_dev_intern', mail_instance.title, mail_instance.inner_text)
+		slackBot.sendPlainMessage('#test_dev_intern', mail_instance.title, mail_instance.inner_text, mail_instance.mail_date)
 	
 	# terminate connection
 	mail.close()
