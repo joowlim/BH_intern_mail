@@ -89,11 +89,11 @@
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-        <Button
-            android:onClick="onClickBtnInsertData"
-            android:text="INSERT DATA"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+        <!--<Button-->
+            <!--android:onClick="onClickBtnInsertData"-->
+            <!--android:text="SEARCH"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content" />-->
         <Button
             android:onClick="onClickBtnGetREST"
             android:text="REQUEST"

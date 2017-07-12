@@ -16,17 +16,20 @@ import java.util.ArrayList;
 
 public class MailListViewAdapter extends BaseAdapter {
     private ArrayList<MailEntry> listViewItemList;
-
+    private ArrayList<MailEntry> listViewItemListOriginal;
 
     public MailListViewAdapter(){
         listViewItemList = new ArrayList<MailEntry>();
+        listViewItemListOriginal = new ArrayList<MailEntry>();
     }
 
     @Override
     public int getCount(){
         return listViewItemList.size();
     }
-
+    public int getTotalCount(){
+        return listViewItemListOriginal.size();
+    }
     @Override
     public View getView(int position, View convertView, ViewGroup parent){
         final int pos = position;
@@ -51,7 +54,18 @@ public class MailListViewAdapter extends BaseAdapter {
 
         return convertView;
     }
-
+    public void clearViewItem(){
+        listViewItemList.clear();
+        //listViewItemList = (ArrayList<MailEntry>)listViewItemListOriginal.clone();
+    }
+    public void resetItem(){
+        listViewItemList.clear();
+        listViewItemList = (ArrayList<MailEntry>)listViewItemListOriginal.clone();
+    }
+    public void clearItemAll(){
+        listViewItemList.clear();
+        listViewItemListOriginal.clear();
+    }
     @Override
     public long getItemId(int pos){
         return pos;
@@ -61,7 +75,15 @@ public class MailListViewAdapter extends BaseAdapter {
     public Object getItem(int pos){
         return listViewItemList.get(pos);
     }
+    public Object getItemFromOrigin(int pos) { return listViewItemListOriginal.get(pos);}
     public void addItem(MailEntry entry){
         listViewItemList.add(entry);
+    }
+    public void addItemToOrigin(MailEntry entry){
+        listViewItemListOriginal.add(entry);
+    }
+    public void addItemToAll(MailEntry entry){
+        addItem(entry);
+        addItemToOrigin(entry);
     }
 }
