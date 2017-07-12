@@ -125,7 +125,8 @@ def main(time_interval = 300):
 	last_time_saved = False
 
 	# initialize slack bot
-	token = 'xoxb-211506158546-FQqCVpwyNYBqUsKZJcqxf3l9'
+	token_file = open('slack_token.txt')
+	token = token_file.readline();
 	slackBot = SlackBot(token)
 	
 	for i in messageList: # messages I want to see
