@@ -151,7 +151,14 @@ def main(time_interval = 300):
 				title = decode_if_byte(to_decode[0][0], to_decode[0][1])
 				
 				to_decode = decode_header(msg['from'])
-				from_ = decode_if_byte(to_decode[0][0], to_decode[0][1])
+				
+				# try to get email address of the sender
+				from_ = ""
+				try:
+					from_ = decode_if_byte(to_decode[1][0], to_decode[1][1])
+				except IndexError:
+					from_ = decode_if_byte(to_decode[0][0], to_decode[0][1])
+				
 				if "<" in from_ and ">" in from_:
 					from_ = from_[from_.index("<")+1:from_.index(">")]
 
