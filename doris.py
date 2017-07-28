@@ -144,12 +144,7 @@ def main(time_interval = 300):
 	last_time_saved = False
 
 	# initialize slack bot
-	try:
-		token_file = open('slack_token.txt')
-	except IOError:
-		sys.exit("Could not read file : %s" % "./slack_tocken.txt")
-	token = token_file.readline().strip('\n')
-	slackBot = SlackBot(token)
+	slackBot = SlackBot(inis['slack_token'])
 	
 	for i in messageList: # messages I want to see
 		typ, msg_data = mail.fetch(i, '(RFC822)')
