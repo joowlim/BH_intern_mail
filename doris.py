@@ -99,9 +99,20 @@ def filter_mail(mailList, config):
 	return mailList
 
 def main(time_interval = 300):
+	# Open ini file
+	ini_file = open('./user_config.ini', 'r')
+	ini_lines = ini_file.readlines()
+
+	inis = dict()
+
+	for ini_line in ini_lines:
+		if ini_line[0] != '#' and ini_line != '\n' :
+			(var_name, var_value) = ini_line.split("=")
+			inis[var_name.rstrip(" ")] = var_value.lstrip(" ").rstrip('\n')
+
 	# login
 	mail = imaplib.IMAP4_SSL('imap.gmail.com')
-	mail.login('dnflsmsdlsxjs@gmail.com','xmfnqoffjstm')
+	mail.login(inis['account_name'],inis['account_password'])
 	mail.list()
 	mail.select('inbox', readonly=True)
 
@@ -133,12 +144,7 @@ def main(time_interval = 300):
 	last_time_saved = False
 
 	# initialize slack bot
-	try:
-		token_file = open('slack_token.txt')
-	except IOError:
-		sys.exit("Could not read file : %s" % "./slack_tocken.txt")
-	token = token_file.readline().strip('\n')
-	slackBot = SlackBot(token)
+	slackBot = SlackBot(inis['slack_token'])
 	
 	for i in messageList: # messages I want to see
 		typ, msg_data = mail.fetch(i, '(RFC822)')
@@ -240,7 +246,7 @@ def main(time_interval = 300):
 	
 	for mail_instance in mailList:
                 # connect to db
-		conn = pymysql.connect(host='localhost',user='root', password='root', db='intern',charset='utf8')
+		conn = pymysql.connect(host='localhost',user=inis['user'], password=inis['password'], db=inis['schema'],charset='utf8')
 		curs = conn.cursor()
 
 		# Update mail table
@@ -264,7 +270,7 @@ def main(time_interval = 300):
 		conn.close()
 		
 		# post on slack
-		slackBot.sendPlainMessage('#test_dev_intern', mail_instance.title, mail_instance.inner_text, mail_instance.mail_date)
+		slackBot.sendPlainMessage(inis['channel'], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date)
 	
 	# terminate connection
 	mail.close()
