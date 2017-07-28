@@ -21,13 +21,13 @@ class SlackBot:
 
         self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
 
-    def sendPlainMessage(self, _channel, _title, _text, _date, _from, attachment):
+    def sendPlainMessage(self, _channel, _title, _text, _date, _from, attachment, inis):
         post_text = "```Title : " + _title + "\nFrom : " + _from + "\nDate : " + _date + "\nText : \n" + _text[:55] + " ..."
-		attach_index = 1
-		for attach in attachment:
-			post_text += "\n attachment " + str(attach_index) + " : " + inis['attachment_url'] + attach
-			attach_index += 1
-		post_text += '```'
+        attach_index = 1
+        for attach in attachment:
+            post_text += "\n attachment " + str(attach_index) + " : " + inis['attachment_url'] + attach
+            attach_index += 1
+        post_text += '```'
         self.slacker.chat.post_message(_channel, post_text, "Mail_parrot")
 
 class Mail:
@@ -233,9 +233,10 @@ def main(time_interval = 300):
 				if os.path.exists(path + filename):
 					# create numbering
 					file_index = 1
-					while os.path.exists(path + filename.split(".")[0] + "_(" + str(file_index) + ")." + filename.split(".")[1]):
+					make_file_name = (lambda x, y : '.'.join(x.split(".")[:-1]) + "_(" + str(y) + ")." + x.split(".")[-1])
+					while os.path.exists(path + make_file_name(filename, file_index)):
 						file_index += 1
-					filename = filename.split(".")[0] + "_(" + str(file_index) + ")." + filename.split(".")[1]
+					filename = make_file_name(filename, file_index)
 				try:
 					with open(os.path.join(path, filename), 'wb') as fp:
 						attachment.append(filename)
@@ -275,7 +276,7 @@ def main(time_interval = 300):
 		conn.close()
 		
 		# post on slack
-		slackBot.sendPlainMessage(inis['channel'], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.from_, mail_instance.attachment)
+		slackBot.sendPlainMessage(inis['channel'], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.from_, mail_instance.attachment, inis)
 	
 	# terminate connection
 	mail.close()
