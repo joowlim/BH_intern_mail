@@ -25,16 +25,17 @@ class SlackBot:
         post_text = "```Title : " + _title + "\nFrom : " + _from + "\nDate : " + _date + "\nText : \n" + _text[:55] + " ..."
         attach_index = 1
         for attach in attachment:
-            post_text += "\n attachment " + str(attach_index) + " : " + inis['attachment_url'] + attach
+            post_text += "\nattachment " + str(attach_index) + " : " + inis['attachment_url'] + attach
             attach_index += 1
         post_text += '```'
         self.slacker.chat.post_message(_channel, post_text, "Mail_parrot")
 
 class Mail:
 	# to, attachment is a list, remainder is string
-	def __init__(self, from_, to, mail_date, title, inner_text, attachment):
+	def __init__(self, from_, to, cc, mail_date, title, inner_text, attachment):
 		self.from_ = from_
 		self.to = to
+		self.cc = cc
 		self.mail_date = mail_date
 		self.title = title
 		self.inner_text = inner_text
@@ -75,7 +76,7 @@ def equals_multi(keywords, content):
 def filter_mail(mailList, config):
 	config_data = []
 	temp_data = []
-	tag = ["# subject", "# inner_text", "# sender", "# receiver", "#"]	
+	tag = ["# subject", "# inner_text", "# sender", "# receiver", "# cc", "#"]	
 
 	try:
 		fp = open(config)
@@ -83,7 +84,7 @@ def filter_mail(mailList, config):
 		sys.exit("Could not read file : %s" % config)
 
 	line = fp.readline()
-	for index in range(1, 5):
+	for index in range(1, len(tag)):
 		temp_data = []
 		while (line.strip() != tag[index]):
 			temp_data.append(line.strip())
@@ -100,6 +101,8 @@ def filter_mail(mailList, config):
 		mailList = list(filter(lambda x: equals_multi(config_data[2], x.from_), mailList))
 	if config_data[3]: # receiver
 		mailList = list(filter(lambda x: equals_multi(config_data[3], x.to), mailList))
+	if config_data[4]: # cc
+		mailList = list(filter(lambda x: equals_multi(config_data[4], x.cc), mailList))
 		
 	return mailList
 
@@ -197,8 +200,8 @@ def main(time_interval = 300):
 				
 				to_decode = decode_header(msg['to'])
 				to = decode_if_byte(to_decode[0][0], to_decode[0][1])
-				if ", " in to:
-					to = to.split(", ")
+				if "," in to:
+					to = map(lambda x: x.strip()[1:-1], to.split(","))
 				else:
 					to = [to]
 				
@@ -206,12 +209,11 @@ def main(time_interval = 300):
 					to_decode = decode_header(msg['cc'])
 					cc = decode_if_byte(to_decode[0][0], to_decode[0][1])
 					if "," in cc:
-						cc = cc.split(", ")
+						cc = map(lambda x: x.strip()[1:-1], cc.split(","))
 					else:
 						cc = [cc]
 				except:
 					cc = []
-				to = to + cc # concatenate receiver and cc
 
 				# inner text
 				inner_text = decode_if_byte(get_text(msg), 'utf-8')
@@ -227,7 +229,7 @@ def main(time_interval = 300):
 			if part.get_content_maintype() == 'multipart':
 				continue
 			path = inis['attachment_path']
-			filename = part.get_filename()
+			filename = decode_if_byte(part.get_filename(), 'utf-8')
 			if filename: # when there is attachment
 				# check file existence
 				if os.path.exists(path + filename):
@@ -244,7 +246,7 @@ def main(time_interval = 300):
 				except IOError:
 					sys.exit("Could not find directory : %s" % path)
 
-		mail_one = Mail(from_, to, mail_date, title, inner_text, attachment)
+		mail_one = Mail(from_, to, cc,  mail_date, title, inner_text, attachment)
 		mailList.append(mail_one)
 
 	# filter mail
@@ -261,10 +263,15 @@ def main(time_interval = 300):
 
 		current_row_id = curs.lastrowid
 
-		# Update mail_log table
+		# Update mail_log table - to
 		for receiver in mail_instance.to:
 			mail_log_sql = "INSERT INTO mail_log (sender, receiver, mail_id) VALUES (%s, %s, %s)"
 			curs.execute(mail_log_sql, (mail_instance.from_, receiver, str(current_row_id)))
+		
+		# Update mail_log table - cc
+		for receiver in mail_instance.cc:
+			mail_log_sql = "INSERT INTO mail_log (sender, receiver, mail_id, is_ref) VALUES (%s, %s, %s, %s)"
+			curs.execute(mail_log_sql, (mail_instance.from_, receiver, str(current_row_id), 1))
 
 		# Update attachment table
 		for attachment_filename in mail_instance.attachment:
