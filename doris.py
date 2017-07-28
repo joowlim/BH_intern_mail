@@ -19,13 +19,15 @@ class SlackBot:
         attachment['mrkdwn_in'] = ['text', 'title_link']
         att = [attachment]
 
-        self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
+        self.slacker.chat.post_message(channel=_channel, text=None, attachments=att, max_char)
 
-    def sendPlainMessage(self, _channel, _title, _text, _date, _from, attachment, inis):
-        post_text = "```Title : " + _title + "\nFrom : " + _from + "\nDate : " + _date + "\nText : \n" + _text[:55] + " ..."
+    def sendPlainMessage(self, _channel, _title, _text, _date, _from, attachment, attach_url):
+        post_text = "```Title : " + _title + "\nFrom : " + _from + "\nDate : " + _date + "\nText : \n" + _text[:max_char]
+        if len(_text) > max_char :
+            post_text += " ..."
         attach_index = 1
         for attach in attachment:
-            post_text += "\nattachment " + str(attach_index) + " : " + inis['attachment_url'] + attach
+            post_text += "\nattachment " + str(attach_index) + " : " + attach_url + attach
             attach_index += 1
         post_text += '```'
         self.slacker.chat.post_message(_channel, post_text, "Mail_parrot")
@@ -283,7 +285,7 @@ def main(time_interval = 300):
 		conn.close()
 		
 		# post on slack
-		slackBot.sendPlainMessage(inis['channel'], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.from_, mail_instance.attachment, inis)
+		slackBot.sendPlainMessage(inis['channel'], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.from_, mail_instance.attachment, inis['attachment_url'], int(inis['max_text_chars']))
 	
 	# terminate connection
 	mail.close()
