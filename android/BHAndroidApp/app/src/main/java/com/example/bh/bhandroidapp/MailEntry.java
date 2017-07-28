@@ -10,16 +10,33 @@ public class MailEntry
     private int mailId;
     private String subject;
     private String sender;
-    private String receiver;
+    private String realReceiver;
+    private String refReceiver;
     private String date;
+    private boolean existRef =false;
     private String innerText;
-    public MailEntry(int id, String sub,String sen, String rec, String date,String text){
+    public MailEntry(int id, String sub,String sen, String realReceiver,String refReceiver, String date,String text){
         mailId = id;
         subject = sub;
         sender = sen;
-        receiver = rec;
+        this.realReceiver = realReceiver;
+        this.refReceiver = refReceiver;
         this.date = date;
         innerText = text;
+    }
+    public MailEntry(int id, String subject,String sender, String date, String text){
+        mailId = id;
+        this.subject = subject;
+        this.sender = sender;
+        this.date = date;
+        this.innerText = text;
+
+    }
+    public boolean getExistRef(){
+        return existRef;
+    }
+    public void setExistRef(boolean existRef){
+        this.existRef = existRef;
     }
     public int getMailId(){
         return mailId;
@@ -41,18 +58,25 @@ public class MailEntry
         return sender;
     }
 
+
     public void setSender(String sender) {
         this.sender = sender;
     }
 
-    public String getReceiver() {
-        return receiver;
+    public String getRealReceiver() {
+        return realReceiver;
     }
 
-    public void setReceiver(String receiver) {
-        this.receiver = receiver;
+    public void setRealReceiver(String receiver) {
+        this.realReceiver = receiver;
     }
 
+    public String getRefReceiver(){
+        return refReceiver;
+    }
+    public void setRefReceiver(String refReceiver){
+        this.refReceiver = refReceiver;
+    }
     public String getDate() {
         return date;
     }

@@ -1,15 +1,22 @@
 package com.example.bh.bhandroidapp;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
+
 import java.util.Date;
 
 
@@ -22,6 +29,7 @@ public class ActivityMain extends AppCompatActivity {
     private EditText editSearchBySender;
     private EditText editSearchByReceiver;
     private EditText editSearchByKeyword;
+    private SharedPreferences prefs ;
 
     private MailRequest mailRequest ;
     @Override
@@ -29,7 +37,17 @@ public class ActivityMain extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if(isFirstStart() == true){ //최초 실행시
+            Toast.makeText(getApplicationContext(),"최초 실행시 서버 ip와 계정을 설정해야 합니다.", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(ActivityMain.this,ActivitySettings.class);
+            startActivity(intent);
+        }
         initVariables();
+    }
+    public boolean isFirstStart(){
+        prefs = getSharedPreferences("settings",MODE_PRIVATE);
+        boolean isFirst = prefs.getBoolean("firstStart",true);
+        return isFirst;
     }
     public void initVariables(){
 
@@ -45,12 +63,13 @@ public class ActivityMain extends AppCompatActivity {
 
                 String subject = clickedMailEntry.getSubject();
                 String sender = clickedMailEntry.getSender();
-                String receiver = clickedMailEntry.getReceiver();
+                String realReceiver = clickedMailEntry.getRealReceiver();
+                String refReceiver = clickedMailEntry.getRefReceiver();
                 String date = clickedMailEntry.getDate();
                 String innerText = clickedMailEntry.getInnerText();
 
-                String message = String.format("보낸이 : %s\n받는이 : %s\n날짜 : %s\n\n본문\n%s",
-                        sender,receiver,date,innerText);
+                String message = String.format("보낸이 : %s\n받는이 : %s\n참조 : %s\n날짜 : %s\n\n본문\n%s",
+                        sender,realReceiver,refReceiver==null ? "없음" : refReceiver ,date,innerText);
 
                 AlertDialog.Builder mailDialog = new AlertDialog.Builder(ActivityMain.this);
                 mailDialog.setTitle(subject);
@@ -63,8 +82,15 @@ public class ActivityMain extends AppCompatActivity {
 
         initView();
 
-        mailRequest = new MailRequest("http://52.221.182.124/api.php/dnflsmsdlsxjs@gmail.com",this);
-        mailRequest.requestToServer();
+        if(isFirstStart() == false){
+            String serverIP = prefs.getString("serverIP","");
+            String mailId = prefs.getString("mailId","");
+            String mailHost = prefs.getString("mailHost","");
+            mailRequest = new MailRequest("http://"+serverIP+"/api.php/"+mailId+"@"+mailHost,this);
+            mailRequest.requestToServer();
+        }
+
+
 
 
     }
@@ -123,7 +149,7 @@ public class ActivityMain extends AppCompatActivity {
     public boolean isMatch(String subject,String sender,String receiver,String keyword,MailEntry entry){
         String entrySubject = entry.getSubject();
         String entrySender = entry.getSender();
-        String entryReceiver = entry.getReceiver();
+        String entryReceiver = entry.getRealReceiver();
         String entryInnerText = entry.getInnerText();
 
         if(!entrySubject.contains(subject)){
@@ -141,6 +167,13 @@ public class ActivityMain extends AppCompatActivity {
         return true;
     }
     public void onClickBtnGetREST(View v){
+        String serverIP = prefs.getString("serverIP","");
+        String mailId = prefs.getString("mailId","");
+        String mailHost = prefs.getString("mailHost","");
+        Log.i("serverIP",serverIP);
+        Log.i("maild",mailId);
+        Log.i("mailHost",mailHost);
+        mailRequest = new MailRequest("http://"+serverIP+"/api.php/"+mailId+"@"+mailHost,this);
         mailRequest.requestToServer();
     }
     public void onClickBtnResetFilter(View v){
@@ -152,5 +185,20 @@ public class ActivityMain extends AppCompatActivity {
     }
     public MailListViewAdapter getMailListAdapter(){
         return adapter;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu,menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == R.id.menu_item_settings){
+            Intent intent = new Intent(ActivityMain.this, ActivitySettings.class);
+            startActivity(intent);
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

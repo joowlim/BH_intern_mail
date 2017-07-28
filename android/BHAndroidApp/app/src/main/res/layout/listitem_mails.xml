@@ -40,13 +40,28 @@
                 android:layout_height="wrap_content" />
 
             <TextView
-                android:id="@+id/receiver"
+                android:id="@+id/real_receiver"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
 
         </LinearLayout>
+        <!--
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:text="참조: "
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
 
+            <TextView
+                android:id="@+id/ref_receiver"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
 
+        </LinearLayout>
+        -->
     </LinearLayout>
     <TextView
         android:id="@+id/date"
