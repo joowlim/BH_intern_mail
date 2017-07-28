@@ -25,7 +25,7 @@ class SlackBot:
         post_text = "```Title : " + _title + "\nFrom : " + _from + "\nDate : " + _date + "\nText : \n" + _text[:55] + " ..."
         attach_index = 1
         for attach in attachment:
-            post_text += "\n attachment " + str(attach_index) + " : " + inis['attachment_url'] + attach
+            post_text += "\nattachment " + str(attach_index) + " : " + inis['attachment_url'] + attach
             attach_index += 1
         post_text += '```'
         self.slacker.chat.post_message(_channel, post_text, "Mail_parrot")
