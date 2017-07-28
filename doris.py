@@ -21,8 +21,13 @@ class SlackBot:
 
         self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
 
-    def sendPlainMessage(self, _channel, _title, _text, _date):
-        post_text = "Title : " + _title + "\nDate : " + _date + "\nText : " + _text[:46] + " ...\n" + "----------------------------------------------------------------------"
+    def sendPlainMessage(self, _channel, _title, _text, _date, _from, attachment):
+        post_text = "```Title : " + _title + "\nFrom : " + _from + "\nDate : " + _date + "\nText : \n" + _text[:55] + " ..."
+		attach_index = 1
+		for attach in attachment:
+			post_text += "\n attachment " + str(attach_index) + " : " + inis['attachment_url'] + attach
+			attach_index += 1
+		post_text += '```'
         self.slacker.chat.post_message(_channel, post_text, "Mail_parrot")
 
 class Mail:
@@ -221,7 +226,7 @@ def main(time_interval = 300):
 		for part in msg.walk():
 			if part.get_content_maintype() == 'multipart':
 				continue
-			path = "./attachment/"
+			path = inis['attachment_path']
 			filename = part.get_filename()
 			if filename: # when there is attachment
 				# check file existence
@@ -270,7 +275,7 @@ def main(time_interval = 300):
 		conn.close()
 		
 		# post on slack
-		slackBot.sendPlainMessage(inis['channel'], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date)
+		slackBot.sendPlainMessage(inis['channel'], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.from_, mail_instance.attachment)
 	
 	# terminate connection
 	mail.close()
