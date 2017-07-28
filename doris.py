@@ -19,9 +19,9 @@ class SlackBot:
         attachment['mrkdwn_in'] = ['text', 'title_link']
         att = [attachment]
 
-        self.slacker.chat.post_message(channel=_channel, text=None, attachments=att, max_char)
+        self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
 
-    def sendPlainMessage(self, _channel, _title, _text, _date, _from, attachment, attach_url):
+    def sendPlainMessage(self, _channel, _title, _text, _date, _from, attachment, attach_url, max_char):
         post_text = "```Title : " + _title + "\nFrom : " + _from + "\nDate : " + _date + "\nText : \n" + _text[:max_char]
         if len(_text) > max_char :
             post_text += " ..."
