@@ -34,11 +34,13 @@ BALANCE HERO 앱
 3) 서버의 /var/www/html/ 에 api.php 를 복사하고 apache를 실행한다.  
   
 4) filter_config.txt 를 열어 아래 filtering 규칙을 참조하여 파일을 수정한다.  
+
+5) user_config.ini 파일을 열어 아래 userinfo 규칙을 참조하여 파일을 수정한다.
   
-5) python3 으로 doris.py를 실행한다.  
+6) python3 으로 doris.py를 실행한다.  
 맨 처음 실행할 때는 python3 doris.py -i 으로 실행하고, 메일을 가져오는 시간 간격을 설정하고 싶으면 -t [INT] 옵션을 추가하여 입력할 수 있다 (단위는 초).  
   
-6) 안드로이드 앱에서 필터링 된 메일 중 최근 10개를 확인한다.  
+7) 안드로이드 앱에서 필터링 된 메일 중 최근 10개를 확인한다.  
   
 #### 4. filtering 규칙  
   
@@ -57,3 +59,10 @@ kate.lim@<i></i>balancehero.com
 \# receiver  
 \#  
 \-------------------------------------  
+
+#### 5. userinfo 규칙
+
+attachment_path 는 첨부파일 저장 경로를 의미한다. url에는 your.domain.name 부분을 사용자의 domain 으로 수정하면 된다.
+account information 에는 차례대로 구글 메일계정과 비밀번호를 입력하면 된다.
+Database information 에 입력하는 것은 차례대로 db서버 ip와 db유저 id, passwd, schema 이름을 입력하면 된다.
+Slack channel information 에는 알림 문자를 받고자 하는 슬랙 채널명과 토큰을 입력하면 된다.
