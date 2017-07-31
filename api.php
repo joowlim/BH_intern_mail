@@ -5,12 +5,35 @@ $request = str_replace("/", "", $request);
 // Get Method
 $method = $_SERVER['REQUEST_METHOD'];
 
+$user_config = fopen('./user_config.ini','r');
+
+if(!$user_config) {
+	echo 'cannot read config file' ;
+}
+while(!feof($user_config)) {
+	$each_line = fgets($user_config);
+	if(strpos($each_line, 'user') !== false) {
+		$db_user = trim(substr($each_line,strpos($each_line,'=')+1));
+		
+	}
+	else if(strpos($each_line, 'password') !== false) {
+		if(strpos($each_line,'account_password') === false) {
+			$db_password = trim(substr($each_line,strpos($each_line,'=')+1));
+		}
+	}
+	else if(strpos($each_line, 'schema') !== false) {
+		$db_schema = trim(substr($each_line,strpos($each_line,'=')+1));
+
+	}
+}
+fclose($user_config);
 // Connect to the db
-$link = mysqli_connect('localhost', 'root', 'root', 'intern');
+$link = mysqli_connect('localhost', $db_user, $db_password, $db_schema);
 mysqli_set_charset($link, 'utf8');
 
-switch ($method)
-{
+
+
+switch ($method) {
   case 'GET':
 
 	$sql = "SELECT temp_result.mail_id, temp_result.sender, real_receiver, title,inner_text,mail_date,receiver as 'ref_receiver',is_ref".
@@ -30,38 +53,35 @@ switch ($method)
 // Execute sql
 $result = mysqli_query($link, $sql);
 
-if(!$result)
-{
+if(!$result) {
   // Return error
   http_response_code(404);
   die(mysqli_error($link));
 }
 
-if($method == 'GET')
-{
+if($method == 'GET') {
 
 	$previous = -1;
     echo '[';
 	$each_object =array();
-    for($i = 0; $i < mysqli_num_rows($result); $i++)
-    {
+    for($i = 0; $i < mysqli_num_rows($result); $i++) {
 		
 	    $each_row =$result->fetch_assoc();
-		if($previous == $each_row['mail_id']){
+		if($previous == $each_row['mail_id']) {
 			if($each_row['is_ref'] == 0){
 				array_push($each_object['real_receiver'], $each_row['real_receiver']);
 				$each_object['real_size']++;
 			}
-			else{
-				if($each_object['ref_receiver'] == null){
+			else {
+				if($each_object['ref_receiver'] == null) {
 					$each_object['ref_receiver'] = array();
 				}
 				array_push($each_object['ref_receiver'], $each_row['ref_receiver']);
 				$each_object['ref_size']++;
 			}
 		}
-		else{
-			if($i != 0){
+		else {
+			if($i != 0) {
 				echo json_encode($each_object) .", ";
 				
 			}
@@ -85,7 +105,7 @@ if($method == 'GET')
 		$previous = $each_row['mail_id'];
 
     }
-	if(mysqli_num_rows($result) > 0){
+	if(mysqli_num_rows($result) > 0) {
 		echo json_encode($each_object);
 	}
     echo ']';
