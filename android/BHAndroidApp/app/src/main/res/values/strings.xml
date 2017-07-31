@@ -3,7 +3,30 @@
 
 
     <string name="search_guide_subject">제목 : </string>
-    <string name="search_guide_sender">From : </string>
-    <string name="search_guide_receiver">To :</string>
+    <string name="search_guide_sender">보낸이 : </string>
+    <string name="search_guide_receiver">받는이 :</string>
     <string name="search_guide_keyword">단어 : </string>
+    <string name="btn_get_mail_from_server">가져오기</string>
+    <string name="btn_reset_filter">필터 초기화</string>
+    <string name="btn_toggle_filter_to_off">필터 숨기기</string>
+    <string name="btn_toggle_filter_to_on">필터 나타내기</string>
+
+
+    <string name="server_ip">SERVER IP :</string>
+    <string name="wanted_mail_id">메일 ID :</string>
+
+    <string name="first_start_must_do_settings">최초 실행시 서버 ip와 계정을 설정해야 합니다.</string>
+    <string name="mail_detail_info_format">보낸이 : %1$s\n받는이 : %2$s\n참조 : %3$s\n날짜 : %4$s\n\n본문\n%5$s</string>
+
+    <string name="menu_settings">설정변경</string>
+    <string name="not_valid_IP_format">IP의 형식이 맞지 않습니다.</string>
+    <string name="confirm_settings">설정을 변경하였습니다.</string>
+    <string name="nothing">없음</string>
+    <string name="confirm">확인</string>
+    <string name="cancel">취소</string>
+
+    <string name="wait_please">잠시만 기다려 주세요...</string>
+    <string name="now_working_for_mail_list">메일을 받아오는 중 입니다.</string>
+    <string name="server_is_not_working">서버가 응답하지 않습니다.</string>
+    <string name="there_is_no_mail">메일이 없습니다.</string>
 </resources>

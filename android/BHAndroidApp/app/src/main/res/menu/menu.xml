@@ -2,5 +2,5 @@
     <item
         android:id="@+id/menu_item_settings"
         android:orderInCategory="1"
-        android:title="설정변경"/>
+        android:title="@string/menu_settings"/>
 </menu>

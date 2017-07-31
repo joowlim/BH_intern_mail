@@ -3,6 +3,7 @@ package com.example.bh.bhandroidapp;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,8 +13,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -24,21 +28,23 @@ public class ActivityMain extends AppCompatActivity {
 
     private ListView listview;
     private MailListViewAdapter adapter;
-
+    private Resources res;
     private EditText editSearchBySubject;
     private EditText editSearchBySender;
     private EditText editSearchByReceiver;
     private EditText editSearchByKeyword;
     private SharedPreferences prefs ;
-
+    private LinearLayout linearFilterContainer;
     private MailRequest mailRequest ;
+    private boolean isFilterOn = true;
+    private Button btnFilterToggle;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         if(isFirstStart() == true){ //최초 실행시
-            Toast.makeText(getApplicationContext(),"최초 실행시 서버 ip와 계정을 설정해야 합니다.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(),getResources().getString(R.string.first_start_must_do_settings), Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(ActivityMain.this,ActivitySettings.class);
             startActivity(intent);
         }
@@ -50,7 +56,7 @@ public class ActivityMain extends AppCompatActivity {
         return isFirst;
     }
     public void initVariables(){
-
+        res = getResources();
 
         //리스트뷰 및 어댑터 setting
         adapter = new MailListViewAdapter();
@@ -68,19 +74,20 @@ public class ActivityMain extends AppCompatActivity {
                 String date = clickedMailEntry.getDate();
                 String innerText = clickedMailEntry.getInnerText();
 
-                String message = String.format("보낸이 : %s\n받는이 : %s\n참조 : %s\n날짜 : %s\n\n본문\n%s",
-                        sender,realReceiver,refReceiver==null ? "없음" : refReceiver ,date,innerText);
+                String message = String.format(res.getString(R.string.mail_detail_info_format),
+                        sender,realReceiver,refReceiver==null ? res.getString(R.string.nothing) : refReceiver ,date,innerText);
 
                 AlertDialog.Builder mailDialog = new AlertDialog.Builder(ActivityMain.this);
                 mailDialog.setTitle(subject);
                 mailDialog.setMessage(message);
-                mailDialog.setPositiveButton("확인",null);
+                mailDialog.setPositiveButton(res.getString(R.string.confirm),null);
                 mailDialog.show();
 
             }
         });
-
+        Log.i("asdf","Asdf");
         initView();
+
 
         if(isFirstStart() == false){
             String serverIP = prefs.getString("serverIP","");
@@ -107,6 +114,8 @@ public class ActivityMain extends AppCompatActivity {
         editSearchByKeyword = (EditText) findViewById(R.id.edit_search_by_keyword);
         editSearchByKeyword.addTextChangedListener(filterTextChangerListener);
 
+        linearFilterContainer = (LinearLayout)findViewById(R.id.linear_filter_container);
+        btnFilterToggle = (Button)findViewById(R.id.btn_toggle_filter);
     }
     TextWatcher filterTextChangerListener = new TextWatcher(){
         @Override
@@ -183,6 +192,17 @@ public class ActivityMain extends AppCompatActivity {
         editSearchByKeyword.setText("");
         searchItemWithFilter();
     }
+    public void onClickBtnToggleFilter(View v){
+        if(isFilterOn){
+            btnFilterToggle.setText(res.getString(R.string.btn_toggle_filter_to_on));
+            linearFilterContainer.setVisibility(View.GONE);
+        }
+        else{
+            btnFilterToggle.setText(res.getString(R.string.btn_toggle_filter_to_off));
+            linearFilterContainer.setVisibility(View.VISIBLE);
+        }
+        isFilterOn = !isFilterOn;
+    }
     public MailListViewAdapter getMailListAdapter(){
         return adapter;
     }
@@ -201,4 +221,5 @@ public class ActivityMain extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
 }
