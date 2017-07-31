@@ -4,6 +4,8 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -70,7 +72,18 @@ public class ActivitySettings extends AppCompatActivity {
         return IP_PATTERN.matcher(ip).matches();
     }
     public void onClickBtnCancelSettings(View v){
+        if(isFirstStart() == true){
+            Toast.makeText(getApplicationContext(),getResources().getString(R.string.first_start_must_do_settings), Toast.LENGTH_SHORT).show();
+            return;
+        }
         finish();
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyCode == KeyEvent.KEYCODE_BACK){
+            if(isFirstStart() == true) return false;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
 }
