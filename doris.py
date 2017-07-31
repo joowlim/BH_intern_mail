@@ -256,7 +256,7 @@ def main(time_interval = 300):
 	
 	for mail_instance in mailList:
                 # connect to db
-		conn = pymysql.connect(host='localhost',user=inis['user'], password=inis['password'], db=inis['schema'],charset='utf8')
+		conn = pymysql.connect(host=inis['dbserver'],user=inis['user'], password=inis['password'], db=inis['schema'],charset='utf8')
 		curs = conn.cursor()
 
 		# Update mail table
