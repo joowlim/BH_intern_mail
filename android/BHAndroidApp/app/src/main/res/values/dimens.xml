@@ -5,10 +5,15 @@
     <dimen name="search_by_receiver">18dp</dimen>
     <dimen name="search_by_keyword">18dp</dimen>
 
+
     <dimen name="search_edit_text_size">15dp</dimen>
     <dimen name="search_edit_text_padding">8dp</dimen>
 
     <dimen name="btn_padding">8dp</dimen>
 
+    <dimen name="setting_id_text_size">18dp</dimen>
+    <dimen name="setting_server_ip_text_size">18dp</dimen>
+
+    <dimen name="button_text_size">20dp</dimen>
 
 </resources>

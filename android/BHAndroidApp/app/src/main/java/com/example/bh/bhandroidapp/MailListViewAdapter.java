@@ -42,7 +42,7 @@ public class MailListViewAdapter extends BaseAdapter {
         }
         TextView subject = (TextView) convertView.findViewById(R.id.subject);
         TextView sender = (TextView) convertView.findViewById(R.id.sender);
-        TextView receiver = (TextView) convertView.findViewById(R.id.real_receiver);
+        //TextView receiver = (TextView) convertView.findViewById(R.id.real_receiver);
         //TextView refReceiver = (TextView) convertView.findViewById(R.id.ref_receiver);
         TextView date = (TextView) convertView.findViewById(R.id.date);
 
@@ -50,7 +50,7 @@ public class MailListViewAdapter extends BaseAdapter {
 
         subject.setText(item.getSubject());
         sender.setText(item.getSender());
-        receiver.setText(item.getRealReceiver());
+        //receiver.setText(item.getRealReceiver());
         //refReceiver.setText(item.getRefReceiver());
         date.setText(item.getDate());
 

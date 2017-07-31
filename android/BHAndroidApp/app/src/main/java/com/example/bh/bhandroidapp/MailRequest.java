@@ -2,6 +2,7 @@ package com.example.bh.bhandroidapp;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
@@ -29,7 +30,7 @@ public class MailRequest {
     private RequestAsyncTask asyncTask;
     private Handler handler = new Handler();
     private ProgressDialog asyncDialog;
-
+    private Resources res;
     public MailRequest(String url,Context c){
         try{
             requestURL = new URL(url);
@@ -39,6 +40,7 @@ public class MailRequest {
         }
         context = c;
         asyncDialog = new ProgressDialog(context);
+        res = c.getResources();
     }
 
     public void requestToServer(){
@@ -53,8 +55,9 @@ public class MailRequest {
             super.onPreExecute();
 
             asyncDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            asyncDialog.setTitle("잠시만 기다려 주세요...");
-            asyncDialog.setMessage("메일을 받아오는 중 입니다...");
+            asyncDialog.setTitle(res.getString(R.string.wait_please));
+            asyncDialog.setMessage(res.getString(R.string.now_working_for_mail_list));
+            asyncDialog.setCancelable(false);
             asyncDialog.show();
         }
         @Override
@@ -65,6 +68,7 @@ public class MailRequest {
                 adapter.clearItemAll();
                 adapter.notifyDataSetChanged();
                 //Toast.makeText(context,"메일을 불러올 수 없습니다", Toast.LENGTH_SHORT).show();
+
                 return;
             }
 
@@ -89,17 +93,20 @@ public class MailRequest {
             ArrayList<MailEntry> retEntries = new ArrayList<MailEntry>();
             try{
                 connection = (HttpURLConnection) requestURL.openConnection();
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(5000);
             }catch(Exception e){
                 Log.e("requestToServer()","openConnection error");
                 dismissProgressDialog();
                 e.printStackTrace();
+                return null;
             }
 
             try{
                 if(connection == null){
                     handler.post(new Runnable(){
                         public void run(){
-                            Toast.makeText(context,"서버가 응답하지 않습니다.",Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context,res.getString(R.string.server_is_not_working),Toast.LENGTH_SHORT).show();
                             dismissProgressDialog();
                         }
                     });
@@ -111,7 +118,7 @@ public class MailRequest {
 
                     handler.post(new Runnable(){
                         public void run(){
-                            Toast.makeText(context,"서버가 응답하지 않습니다.",Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context,res.getString(R.string.server_is_not_working),Toast.LENGTH_SHORT).show();
                             dismissProgressDialog();
                         }
                     });
@@ -123,7 +130,7 @@ public class MailRequest {
                 e.printStackTrace();
                 handler.post(new Runnable(){
                     public void run(){
-                        Toast.makeText(context,"서버가 응답하지 않습니다.",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context,res.getString(R.string.server_is_not_working),Toast.LENGTH_SHORT).show();
                         dismissProgressDialog();
                     }
                 });
@@ -145,7 +152,7 @@ public class MailRequest {
                 if(jsonArray.length() == 0){
                     handler.post(new Runnable(){
                         public void run(){
-                            Toast.makeText(context,"메일이 없습니다.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context,res.getString(R.string.there_is_no_mail), Toast.LENGTH_SHORT).show();
 
                             dismissProgressDialog();
                         }
