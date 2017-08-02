@@ -4,91 +4,98 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
     tools:context="com.example.bh.bhandroidapp.ActivityMain"
     android:orientation="vertical">
 
     <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/linear_filter_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-        <TextView
-            android:textSize="@dimen/search_by_subject"
-            android:textColor="@color/search_guide_text"
-            android:text="@string/search_guide_subject"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            />
-        <EditText
-            android:padding="@dimen/search_edit_text_padding"
-            android:textSize="@dimen/search_edit_text_size"
-            android:id="@+id/edit_search_by_subject"
-            android:layout_weight="9"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content" />
+
+        <LinearLayout
+
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:textSize="@dimen/search_by_subject"
+                android:textColor="@color/search_guide_text"
+                android:text="@string/search_guide_subject"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                />
+            <EditText
+                android:padding="@dimen/search_edit_text_padding"
+                android:id="@+id/edit_search_by_subject"
+                android:layout_weight="9"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+
+                android:textSize="@dimen/serach_by_sender"
+                android:textColor="@color/search_guide_text"
+                android:text="@string/search_guide_sender"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                />
+            <EditText
+                android:padding="@dimen/search_edit_text_padding"
+                android:id="@+id/edit_search_by_sender"
+                android:layout_weight="9"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:textSize="@dimen/search_by_receiver"
+                android:textColor="@color/search_guide_text"
+                android:text="@string/search_guide_receiver"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                />
+            <EditText
+                android:padding="@dimen/search_edit_text_padding"
+                android:id="@+id/edit_search_by_receiver"
+                android:layout_weight="9"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:textSize="@dimen/search_by_keyword"
+                android:textColor="@color/search_guide_text"
+                android:text="@string/search_guide_keyword"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                />
+            <EditText
+                android:padding="@dimen/search_edit_text_padding"
+                android:id="@+id/edit_search_by_keyword"
+                android:layout_weight="9"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+
+
     </LinearLayout>
-
-    <LinearLayout
-
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <TextView
-
-            android:textSize="@dimen/serach_by_sender"
-            android:textColor="@color/search_guide_text"
-            android:text="@string/search_guide_sender"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            />
-        <EditText
-            android:textSize="@dimen/search_edit_text_size"
-            android:padding="@dimen/search_edit_text_padding"
-            android:id="@+id/edit_search_by_sender"
-            android:layout_weight="9"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <TextView
-            android:textSize="@dimen/search_by_receiver"
-            android:textColor="@color/search_guide_text"
-            android:text="@string/search_guide_receiver"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            />
-        <EditText
-            android:textSize="@dimen/search_edit_text_size"
-            android:padding="@dimen/search_edit_text_padding"
-            android:id="@+id/edit_search_by_receiver"
-            android:layout_weight="9"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <TextView
-            android:textSize="@dimen/search_by_keyword"
-            android:textColor="@color/search_guide_text"
-            android:text="@string/search_guide_keyword"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            />
-        <EditText
-            android:textSize="@dimen/search_edit_text_size"
-            android:padding="@dimen/search_edit_text_padding"
-            android:id="@+id/edit_search_by_keyword"
-            android:layout_weight="9"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
-
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
@@ -97,14 +104,22 @@
             android:layout_weight="1"
             android:padding="@dimen/btn_padding"
             android:onClick="onClickBtnGetREST"
-            android:text="REQUEST"
+            android:text="@string/btn_get_mail_from_server"
             android:layout_width="0dp"
             android:layout_height="wrap_content" />
         <Button
             android:layout_weight="1"
             android:padding="@dimen/btn_padding"
             android:onClick="onClickBtnResetFilter"
-            android:text="Reset Filter"
+            android:text="@string/btn_reset_filter"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/btn_toggle_filter"
+            android:layout_weight="1"
+            android:padding="@dimen/btn_padding"
+            android:onClick="onClickBtnToggleFilter"
+            android:text="@string/btn_toggle_filter_to_off"
             android:layout_width="0dp"
             android:layout_height="wrap_content" />
     </LinearLayout>
@@ -112,7 +127,9 @@
     <ListView
         android:id="@+id/listview_mail_list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
     </ListView>
+
+
 </LinearLayout>
