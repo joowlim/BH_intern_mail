@@ -30,7 +30,6 @@ if(count($mail_list) == 0){
 	echo '사용법 : api.php/mail_list[]=메일1&mail_list[]=메일2...로 호출해 주세요';
 	return;
 }
-$inner_sql = "";
 
 for($i = 0; $i< count($mail_list); $i++){
 	$inner_sql = $inner_sql."'".$mail_list[$i]."'=receiver";
