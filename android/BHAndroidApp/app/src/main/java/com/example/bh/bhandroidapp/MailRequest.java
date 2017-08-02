@@ -67,11 +67,8 @@ public class MailRequest {
             if(mailEntry == null){
                 adapter.clearItemAll();
                 adapter.notifyDataSetChanged();
-                //Toast.makeText(context,"메일을 불러올 수 없습니다", Toast.LENGTH_SHORT).show();
-
                 return;
             }
-
 
             adapter.clearItemAll();
             for(int i = 0 ;i<mailEntry.size();i++){
@@ -136,7 +133,6 @@ public class MailRequest {
                 });
                 return null;
             }
-
             try{
 
                 InputStream bis = connection.getInputStream();
@@ -205,5 +201,4 @@ public class MailRequest {
             return retEntries;
         }
     }
-
 }

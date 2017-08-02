@@ -18,8 +18,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
-
-import java.util.Date;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 
 public class ActivityMain extends AppCompatActivity {
@@ -83,21 +83,38 @@ public class ActivityMain extends AppCompatActivity {
 
             }
         });
-        Log.i("asdf","Asdf");
         initView();
-
 
         if(isFirstStart() == false){
             String serverIP = prefs.getString("serverIP","");
-            String mailId = prefs.getString("mailId","");
-            String mailHost = prefs.getString("mailHost","");
-            mailRequest = new MailRequest("http://"+serverIP+"/api.php/"+mailId+"@"+mailHost,this);
+            String mailList = prefs.getString("mailList","{\"mail_list\":[]}");
+            JSONArray tempMailList = null;
+
+            try{
+                tempMailList = new JSONObject(mailList).getJSONArray("mail_list");
+
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+            StringBuffer requestParams = new StringBuffer("?");
+
+            if(tempMailList == null){
+                return ;
+            }
+
+            for(int i = 0;i<tempMailList.length();i++){
+                try{
+                    requestParams.append(String.format("mail_list[]=%s&",tempMailList.getString(i)));
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                    Log.e("err idx",i+"");
+                }
+            }
+
+            mailRequest = new MailRequest("http://"+serverIP+"/api.php/"+requestParams.toString(),this);
             mailRequest.requestToServer();
         }
-
-
-
-
     }
     public void initView(){
         editSearchBySubject = (EditText)findViewById(R.id.edit_search_by_subject);
@@ -133,7 +150,6 @@ public class ActivityMain extends AppCompatActivity {
     };
     
     public void searchItemWithFilter(){
-        Date date = new Date();
         String subject = editSearchBySubject.getText().toString();
         String sender = editSearchBySender.getText().toString();
         String receiver = editSearchByReceiver.getText().toString();
@@ -175,12 +191,33 @@ public class ActivityMain extends AppCompatActivity {
     }
     public void onClickBtnGetREST(View v){
         String serverIP = prefs.getString("serverIP","");
-        String mailId = prefs.getString("mailId","");
-        String mailHost = prefs.getString("mailHost","");
-        Log.i("serverIP",serverIP);
-        Log.i("maild",mailId);
-        Log.i("mailHost",mailHost);
-        mailRequest = new MailRequest("http://"+serverIP+"/api.php/"+mailId+"@"+mailHost,this);
+        String mailList = prefs.getString("mailList","{\"mail_list\":[]}");
+        JSONArray tempMailList = null;
+
+        try{
+
+            tempMailList = new JSONObject(mailList).getJSONArray("mail_list");
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        StringBuffer requestParams = new StringBuffer("?");
+
+        if(tempMailList == null){
+            return ;
+        }
+
+        for(int i = 0;i<tempMailList.length();i++){
+            try{
+                requestParams.append(String.format("mail_list[]=%s&",tempMailList.getString(i)));
+            }
+            catch (Exception e){
+                e.printStackTrace();
+                Log.e("err idx",i+"");
+            }
+        }
+
+        mailRequest = new MailRequest("http://"+serverIP+"/api.php/"+requestParams.toString(),this);
         mailRequest.requestToServer();
     }
     public void onClickBtnResetFilter(View v){
