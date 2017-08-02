@@ -349,10 +349,7 @@ def mailget(account,password,inis,last_parse_time):
 	mail.logout()
   
 	# notification to user
-	print ("Mail updated!()?")
-
-	# start new connection simultaneously
-	threading.Timer(time_interval, main).start() # in second
+	print ("Mail updated!")
   
 def wrong_parameter():
 	print("Wrong parameter")
