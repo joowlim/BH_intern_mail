@@ -121,11 +121,11 @@ def filter_mail(mailList, config):
 
 def filter_mail_by_db(mailList, f):
 	if f["title_cond"] != []:
-		mailList = list(filter(lambda x: contains_multi(f["title_cond"], x.title), mailList))
+		mailList = list(filter(lambda x: contains_all(f["title_cond"], x.title), mailList))
 	if f["inner_text_cond"] != []:
-		mailList = list(filter(lambda x: contains_multi(f["inner_text_cond"], x.inner_text), mailList))
+		mailList = list(filter(lambda x: contains_all(f["inner_text_cond"], x.inner_text), mailList))
 	if f["sender_cond"] != []:
-		mailList = list(filter(lambda x: equals_multi(f["sender_cond"], x.from_), mailList))
+		mailList = list(filter(lambda x: equals_all(f["sender_cond"], x.from_), mailList))
 	return mailList
 
 def main(time_interval = 300):
@@ -339,7 +339,7 @@ def mailget(account,password,inis,last_parse_time):
 			conn.commit()
 			
 			# post on slack
-			slackBot.sendPlainMessage(f["slack_channel"], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.from_, mail_instance.attachment, inis['attachment_url'], int(inis['max_text_chars']))
+			slackBot.sendPlainMessage(f["slack_channel"], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.from_, account, mail_instance.attachment, inis['attachment_url'], int(inis['max_text_chars']))
 
 	#close the connection
 	conn.close()
