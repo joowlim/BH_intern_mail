@@ -21,8 +21,8 @@ class SlackBot:
 
         self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
 
-    def sendPlainMessage(self, _channel, _title, _text, _date, _from, attachment, attach_url, max_char):
-        post_text = "```Title : " + _title + "\nFrom : " + _from + "\nDate : " + _date + "\nText : \n" + _text[:max_char]
+    def sendPlainMessage(self, _channel, _title, _text, _date, _from, _to, attachment, attach_url, max_char):
+        post_text = "```Title : " + _title + "\nFrom : " + _from + "\nTo : " + _to + "\nDate : " + _date + "\nText : \n" + _text[:max_char]
         if len(_text) > max_char :
             post_text += " ..."
         attach_index = 1
@@ -120,20 +120,6 @@ def main(time_interval = 300):
 			(var_name, var_value) = ini_line.split("=")
 			inis[var_name.rstrip(" ")] = var_value.lstrip(" ").rstrip('\n')
 
-	# login
-	mail = imaplib.IMAP4_SSL('imap.gmail.com')
-	mail.login(inis['account_name'],inis['account_password'])
-	mail.list()
-	mail.select('inbox', readonly=True)
-
-	# get list of messages in inbox
-	result, data = mail.search(None, "ALL")
-	messageList = data[0].split()
-	messageList.reverse()
-
-	# list of mail instances
-	mailList = []
-
 	# get last parsing time
 	try:
 		time_file = open('./last_time', 'r')
@@ -149,6 +135,35 @@ def main(time_interval = 300):
 						int(time_line.split('-')[2].split()[1].split(":")[0]),
 						int(time_line.split('-')[2].split()[1].split(":")[1]),
 						int(time_line.split('-')[2].split()[1].split(":")[2]))
+
+	#account and passwords
+	accountorigin = inis['account_name']
+	passwordorigin = inis['account_password']
+	accountlist = accountorigin.split(',')
+	passwordlist = passwordorigin.split(',')
+	for accounts in accountlist:
+		mailget(accounts,passwordlist[accountlist.index(accounts)],inis,last_parse_time)
+	# notification to user
+	print ("Mail updated!")
+
+	# start new connection simultaneously
+	threading.Timer(time_interval, main).start() # in second
+
+def mailget(account,password,inis,last_parse_time):
+	# login
+	mail = imaplib.IMAP4_SSL('imap.gmail.com')
+	#mail.login(inis['account_name'],inis['account_password'])
+	mail.login(account,password)
+	mail.list()
+	mail.select('inbox', readonly=True)
+
+	# get list of messages in inbox
+	result, data = mail.search(None, "ALL")
+	messageList = data[0].split()
+	messageList.reverse()
+
+	# list of mail instances
+	mailList = []
 	parse_end = False
 
 	last_time_saved = False
@@ -161,13 +176,10 @@ def main(time_interval = 300):
 		for response_part in msg_data:
 			if isinstance(response_part, tuple):
 				msg = email.message_from_bytes(response_part[1])
-				
 				# set 'subject', 'from', 'to'
 				to_decode = decode_header(msg['subject'])
 				title = decode_if_byte(to_decode[0][0], to_decode[0][1])
-				
 				to_decode = decode_header(msg['from'])
-				
 				# try to get email address of the sender
 				from_ = ""
 				try:
@@ -189,7 +201,7 @@ def main(time_interval = 300):
 				
 				if not last_time_saved:
 					# New mail arrived
-					if dt > last_parse_time :
+					if dt >= last_parse_time :
 						# save last time
 						time_file = open('last_time', 'w')
 						time_file.write(str(mail_date))
@@ -199,7 +211,7 @@ def main(time_interval = 300):
 				if last_parse_time >= dt :
 					parse_end = True
 					break
-				
+
 				to_decode = decode_header(msg['to'])
 				to = decode_if_byte(to_decode[0][0], to_decode[0][1])
 				if "," in to:
@@ -250,10 +262,10 @@ def main(time_interval = 300):
 
 		mail_one = Mail(from_, to, cc,  mail_date, title, inner_text, attachment)
 		mailList.append(mail_one)
+	
 
 	# filter mail
 	mailList = filter_mail(mailList, "./filter_config.txt")
-	
 	for mail_instance in mailList:
                 # connect to db
 		conn = pymysql.connect(host=inis['server'],user=inis['user'], password=inis['password'], db=inis['schema'],charset='utf8')
@@ -285,18 +297,18 @@ def main(time_interval = 300):
 		conn.close()
 		
 		# post on slack
-		slackBot.sendPlainMessage(inis['channel'], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.from_, mail_instance.attachment, inis['attachment_url'], int(inis['max_text_chars']))
-	
+
+		slackBot.sendPlainMessage(inis['channel'], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.from_, account, mail_instance.attachment, inis['attachment_url'], int(inis['max_text_chars']))
 	# terminate connection
 	mail.close()
 	mail.logout()
-	
+	'''
 	# notification to user
 	print ("Mail updated!")
 
 	# start new connection simultaneously
 	threading.Timer(time_interval, main).start() # in second
-
+	'''
 def wrong_parameter():
 	print("Wrong parameter")
 
