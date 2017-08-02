@@ -75,6 +75,17 @@ def equals_multi(keywords, content):
 			return True
 	return False
 
+def contains_all(keywords, content):
+	for keyword in keywords:
+		if keyword not in content:
+			return False
+	return True
+
+def equals_all(keywords, content):
+	for keyword in keywords:
+		if keyword != content:
+			return False
+	return True
 def filter_mail(mailList, config):
 	config_data = []
 	temp_data = []
@@ -106,6 +117,15 @@ def filter_mail(mailList, config):
 	if config_data[4]: # cc
 		mailList = list(filter(lambda x: equals_multi(config_data[4], x.cc), mailList))
 		
+	return mailList
+
+def filter_mail_by_db(mailList, f):
+	if f["title_cond"] != []:
+		mailList = list(filter(lambda x: contains_multi(f["title_cond"], x.title), mailList))
+	if f["inner_text_cond"] != []:
+		mailList = list(filter(lambda x: contains_multi(f["inner_text_cond"], x.inner_text), mailList))
+	if f["sender_cond"] != []:
+		mailList = list(filter(lambda x: equals_multi(f["sender_cond"], x.from_), mailList))
 	return mailList
 
 def main(time_interval = 300):
@@ -250,42 +270,70 @@ def main(time_interval = 300):
 
 		mail_one = Mail(from_, to, cc,  mail_date, title, inner_text, attachment)
 		mailList.append(mail_one)
-
-	# filter mail
-	mailList = filter_mail(mailList, "./filter_config.txt")
 	
-	for mail_instance in mailList:
-                # connect to db
-		conn = pymysql.connect(host=inis['server'],user=inis['user'], password=inis['password'], db=inis['schema'],charset='utf8')
-		curs = conn.cursor()
+	# connect to db
+	conn = pymysql.connect(host=inis['server'],user=inis['user'], password=inis['password'], db=inis['schema'],charset='utf8')
+	curs = conn.cursor()
 
-		# Update mail table
-		mail_sql = "INSERT INTO mail (title, inner_text, mail_date) VALUES (%s, %s, %s)" #datetime.date(y,m,d)
-		curs.execute(mail_sql, (mail_instance.title, mail_instance.inner_text, mail_instance.mail_date))
+    # filter mail
+	mail_sql = "SELECT filter_id, title_cond, inner_text_cond, sender_cond, slack_channel FROM filter ORDER BY filter_id ASC" 
+	curs.execute(mail_sql)
 
-		current_row_id = curs.lastrowid
+	filters = []
 
-		# Update mail_log table - to
-		for receiver in mail_instance.to:
-			mail_log_sql = "INSERT INTO mail_log (sender, receiver, mail_id) VALUES (%s, %s, %s)"
-			curs.execute(mail_log_sql, (mail_instance.from_, receiver, str(current_row_id)))
+	for (filter_id, title_cond, inner_text_cond, sender_cond, slack_channel) in curs:
+		temp_map = {}
+		temp_map["filter_id"] = filter_id
+		if title_cond:
+			temp_map["title_cond"] = title_cond.split(", ")
+		else:
+			temp_map["title_cond"] = []
+		if inner_text_cond:
+			temp_map["inner_text_cond"] = inner_text_cond.split(", ")
+		else:
+			temp_map["inner_text_cond"] = []
+		if sender_cond:
+			temp_map["sender_cond"] = sender_cond.split(", ")
+		else:
+			temp_map["sender_cond"] = []
+		temp_map["slack_channel"] = slack_channel
+
+		filters.append(temp_map)
+	
+	for f in filters:
+		mailList_filtered = filter_mail_by_db(mailList, f)
+		print (list(map(lambda x: x.title, mailList_filtered)) )
 		
-		# Update mail_log table - cc
-		for receiver in mail_instance.cc:
-			mail_log_sql = "INSERT INTO mail_log (sender, receiver, mail_id, is_ref) VALUES (%s, %s, %s, %s)"
-			curs.execute(mail_log_sql, (mail_instance.from_, receiver, str(current_row_id), 1))
+		for mail_instance in mailList_filtered:
+			# Update mail table
+			mail_sql = "INSERT INTO mail (title, inner_text, mail_date, filter_id) VALUES (%s, %s, %s, %s)" #datetime.date(y,m,d)
+			curs.execute(mail_sql, (mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, f["filter_id"]))
 
-		# Update attachment table
-		for attachment_filename in mail_instance.attachment:
-			mail_attachment_sql = "INSERT INTO attachment (each_attachment, mail_id) VALUES (%s, %s)"
-			curs.execute(mail_attachment_sql, (attachment_filename, current_row_id));
+			current_row_id = curs.lastrowid
 
-		# commit and close the connection
-		conn.commit()
-		conn.close()
+			# Update mail_log table - to
+			for receiver in mail_instance.to:
+				mail_log_sql = "INSERT INTO mail_log (sender, receiver, mail_id) VALUES (%s, %s, %s)"
+				curs.execute(mail_log_sql, (mail_instance.from_, receiver, str(current_row_id)))
+			
+			# Update mail_log table - cc
+			for receiver in mail_instance.cc:
+				mail_log_sql = "INSERT INTO mail_log (sender, receiver, mail_id, is_ref) VALUES (%s, %s, %s, %s)"
+				curs.execute(mail_log_sql, (mail_instance.from_, receiver, str(current_row_id), 1))
+
+			# Update attachment table
+			for attachment_filename in mail_instance.attachment:
+				mail_attachment_sql = "INSERT INTO attachment (each_attachment, mail_id) VALUES (%s, %s)"
+				curs.execute(mail_attachment_sql, (attachment_filename, current_row_id));
+
+			# commit the connection
+			conn.commit()
+			
+			# post on slack
+			slackBot.sendPlainMessage(f["slack_channel"], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.from_, mail_instance.attachment, inis['attachment_url'], int(inis['max_text_chars']))
 		
-		# post on slack
-		slackBot.sendPlainMessage(inis['channel'], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.from_, mail_instance.attachment, inis['attachment_url'], int(inis['max_text_chars']))
+	#close the connection
+	conn.close()
 	
 	# terminate connection
 	mail.close()
@@ -295,7 +343,7 @@ def main(time_interval = 300):
 	print ("Mail updated!")
 
 	# start new connection simultaneously
-	threading.Timer(time_interval, main).start() # in second
+	# threading.Timer(time_interval, main).start() # in second
 
 def wrong_parameter():
 	print("Wrong parameter")
