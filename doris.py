@@ -343,7 +343,7 @@ def main(time_interval = 300):
 	print ("Mail updated!")
 
 	# start new connection simultaneously
-	# threading.Timer(time_interval, main).start() # in second
+	threading.Timer(time_interval, main).start() # in second
 
 def wrong_parameter():
 	print("Wrong parameter")
