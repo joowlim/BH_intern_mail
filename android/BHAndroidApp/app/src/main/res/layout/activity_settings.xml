@@ -26,38 +26,36 @@
             android:layout_height="wrap_content" />
 
     </LinearLayout>
+
+
+    <LinearLayout
+        android:id="@+id/linear_mail_list_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+
+    </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-
-        <TextView
-            android:textSize="@dimen/setting_id_text_size"
-            android:textColor="@color/setting_guide_text"
-            android:text="@string/wanted_mail_id"
+        <Button
+            android:text="@string/add_mail"
+            android:onClick="onClickBtnAddMail"
+            android:layout_weight="1"
             android:layout_width="0dp"
-            android:layout_weight="2"
             android:layout_height="wrap_content" />
-        <EditText
-            android:id="@+id/edit_mail_id"
+        <Button
+            android:text="@string/remove_mail"
+            android:onClick="onClickBtnRemoveMail"
+            android:layout_weight="1"
             android:layout_width="0dp"
-            android:layout_weight="4"
-            android:layout_height="wrap_content" />
-        <TextView
-            android:textColor="@color/setting_guide_text"
-            android:text="\@"
-            android:textSize="@dimen/setting_id_text_size"
-            android:layout_width="0dp"
-            android:layout_weight="0.5"
-            android:layout_height="wrap_content" />
-        <EditText
-            android:id="@+id/edit_mail_host"
-            android:layout_width="0dp"
-            android:layout_weight="5"
             android:layout_height="wrap_content" />
 
     </LinearLayout>
 
     <LinearLayout
+        android:gravity="bottom"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <Button
@@ -67,11 +65,6 @@
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content" />
-        <Button
-            android:text="@string/cancel"
-            android:onClick="onClickBtnCancelSettings"
-            android:layout_weight="1"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content" />
+
     </LinearLayout>
 </LinearLayout>

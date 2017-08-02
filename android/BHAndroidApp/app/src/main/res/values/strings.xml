@@ -14,6 +14,11 @@
 
     <string name="server_ip">SERVER IP :</string>
     <string name="wanted_mail_id">메일 ID :</string>
+    <string name="add_mail">메일 추가</string>
+    <string name="remove_mail">메일 제거</string>
+    <string name="cannot_push_more_than_10">더이상 추가할 수 없습니다.</string>
+    <string name="no_mail_entry">적어도 하나의 메일이 있어야 합니다.</string>
+    <string name="there_is_black">계정과 메일은 빈칸이 될 수 없습니다.</string>
 
     <string name="first_start_must_do_settings">최초 실행시 서버 ip와 계정을 설정해야 합니다.</string>
     <string name="mail_detail_info_format">보낸이 : %1$s\n받는이 : %2$s\n참조 : %3$s\n날짜 : %4$s\n\n본문\n%5$s</string>
@@ -29,4 +34,7 @@
     <string name="now_working_for_mail_list">메일을 받아오는 중 입니다.</string>
     <string name="server_is_not_working">서버가 응답하지 않습니다.</string>
     <string name="there_is_no_mail">메일이 없습니다.</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
