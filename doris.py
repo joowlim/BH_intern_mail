@@ -1,4 +1,4 @@
-import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading, sys
+import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading, sys, chardet, base64
 from email.header import decode_header
 from slacker import Slacker
 
@@ -6,31 +6,33 @@ month_name_list = ["dummy", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Au
 
 class SlackBot:
 
-    def __init__(self,token):
-        self.slacker = Slacker(token)
+	def __init__(self,token):
+		self.slacker = Slacker(token)
 
-    def sendCustomizedMessage(self,_channel, _title, _text, _pretext='', _link='',):
-        attachment = dict()
-        attachment['pretext'] = _pretext
-        attachment['title'] = _title
-        attachment['title_link'] = _link
-        attachment['fallback'] = _text
-        attachment['text'] = _text
-        attachment['mrkdwn_in'] = ['text', 'title_link']
-        att = [attachment]
+	def sendCustomizedMessage(self,_channel, _title, _text, _pretext='', _link='',):
+		attachment = dict()
+		attachment['pretext'] = _pretext
+		attachment['title'] = _title
+		attachment['title_link'] = _link
+		attachment['fallback'] = _text
+		attachment['text'] = _text
+		attachment['mrkdwn_in'] = ['text', 'title_link']
+		att = [attachment]
 
-        self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
+		self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
 
-    def sendPlainMessage(self, _channel, _title, _text, _date, _from, _to, attachment, attach_url, max_char):
-        post_text = "```Title : " + _title + "\nFrom : " + _from + "\nTo : " + _to + "\nDate : " + _date + "\nText : \n" + _text[:max_char]
-        if len(_text) > max_char :
-            post_text += " ..."
-        attach_index = 1
-        for attach in attachment:
-            post_text += "\nattachment " + str(attach_index) + " : " + attach_url + attach
-            attach_index += 1
-        post_text += '```'
-        self.slacker.chat.post_message(_channel, post_text, "Mail_parrot")
+	def sendPlainMessage(self, _channel, _title, _text, _date, _from, _to, attachment, attach_url, max_char):
+		post_text = "```Title : " + _title + "\nFrom : " + _from + "\nTo : " + _to + "\nDate : " + _date + "\nText : \n" + _text[:max_char]
+		if len(_text) > max_char :
+			post_text += " ..."
+		attach_index = 1
+		for attach in attachment:
+			post_text += "\nattachment " + str(attach_index) + " : " + attach_url + attach
+			attach_index += 1
+			#print(attach.encode(encoding='UTF-8',errors='strict'))
+			#print(chardet.detect(attach.encode()))
+		post_text += '```'
+		self.slacker.chat.post_message(_channel, post_text, "Mail_parrot")
 
 class Mail:
 	# to, attachment is a list, remainder is string
@@ -261,12 +263,17 @@ def mailget(account,password,inis,last_parse_time):
 			if part.get_content_maintype() == 'multipart':
 				continue
 			path = inis['attachment_path']
-			filename = decode_if_byte(part.get_filename(), 'utf-8')
+			
+			filename = decode_if_byte(part.get_filename(), 'UTF-8')
 			if filename: # when there is attachment
 				# check file existence
+				splited_filename = filename[1:].split('?')
+				if filename[:10] == "=?UTF-8?B?" or filename[:10] == "=?utf-8?B?":
+					filename = base64.b64decode(filename[10:]).decode('utf-8')
 				if os.path.exists(path + filename):
 					# create numbering
 					file_index = 1
+					
 					make_file_name = (lambda x, y : '.'.join(x.split(".")[:-1]) + "_(" + str(y) + ")." + x.split(".")[-1])
 					while os.path.exists(path + make_file_name(filename, file_index)):
 						file_index += 1
@@ -284,8 +291,8 @@ def mailget(account,password,inis,last_parse_time):
 	# connect to db
 	conn = pymysql.connect(host=inis['server'],user=inis['user'], password=inis['password'], db=inis['schema'],charset='utf8')
 	curs = conn.cursor()
-  
-  # filter mail
+
+# filter mail
 	mail_sql = "SELECT filter_id, title_cond, inner_text_cond, sender_cond, slack_channel FROM filter ORDER BY filter_id ASC" 
 	curs.execute(mail_sql)
 
@@ -347,10 +354,10 @@ def mailget(account,password,inis,last_parse_time):
 	# terminate connection
 	mail.close()
 	mail.logout()
-  
+
 	# notification to user
 	print ("Mail updated!")
-  
+
 def wrong_parameter():
 	print("Wrong parameter")
 
@@ -371,11 +378,11 @@ def run_t(t):
 	main(t)
 
 def is_int(s):
-    try: 
-        int(s)
-        return True
-    except ValueError:
-        return False
+	try: 
+		int(s)
+		return True
+	except ValueError:
+		return False
 
 if __name__ == "__main__":
 	# without argument
