@@ -8,6 +8,8 @@ class SlackBot:
 
 	def __init__(self,token):
 		self.slacker = Slacker(token)
+		self.current_color_idx = 0
+		self.color = ['#36a64f','#8f1253']
 
 	def sendCustomizedMessage(self,_channel, _title, _text, _pretext='', _link='',):
 		attachment = dict()
@@ -22,17 +24,27 @@ class SlackBot:
 		self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
 
 	def sendPlainMessage(self, _channel, _title, _text, _date, _from, _to, attachment, attach_url, max_char):
-		post_text = "```Title : " + _title + "\nFrom : " + _from + "\nTo : " + _to + "\nDate : " + _date + "\nText : \n" + _text[:max_char]
+		post_text = "Title : " + _title + "\nFrom : " + _from + "\nTo : " + _to + "\nDate : " + _date + "\nText : \n" + _text[:max_char]
 		if len(_text) > max_char :
 			post_text += " ..."
+
+		slacker_attachment = dict()
+		slacker_attachment['text'] = post_text
+		slacker_attachment['color'] = self.color[self.current_color_idx]
+		slacker_attachment['fields'] = []
+		
 		attach_index = 1
+		if attachment:
+			slacker_attachment['text'] += "\nAttachment\n"
 		for attach in attachment:
-			post_text += "\nattachment " + str(attach_index) + " : " + attach_url + attach
+			attachment_text = "Attachment " + str(attach_index) + " : " + attach
 			attach_index += 1
-			#print(attach.encode(encoding='UTF-8',errors='strict'))
-			#print(chardet.detect(attach.encode()))
-		post_text += '```'
-		self.slacker.chat.post_message(_channel, post_text, "Mail_parrot")
+			link_string = "\n<" + attach_url + attach + "|" + attachment_text + ">"
+			slacker_attachment['text'] += link_string
+			
+		att = [slacker_attachment]
+		self.slacker.chat.post_message(channel=_channel,attachments=att,username="Mail_parrot");
+		self.current_color_idx = (self.current_color_idx+1) % 2
 
 class Mail:
 	# to, attachment is a list, remainder is string
