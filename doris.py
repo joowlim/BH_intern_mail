@@ -1,4 +1,4 @@
-import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading, sys, chardet, base64
+import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading, sys, base64
 from email.header import decode_header
 from slacker import Slacker
 
