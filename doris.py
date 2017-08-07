@@ -144,7 +144,7 @@ def filter_mail_by_db(mailList, f):
 
 def delete_attachments_if_expired(inis):
 	duration_day = inis['duration_day']
-	duration_second = int(duration_day)
+	duration_second = int(duration_day) * 24 * 60 * 60
 
 	attachment_path = inis['attachment_path']
 	current_time = datetime.datetime.now()
