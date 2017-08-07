@@ -1,6 +1,0 @@
-# subject
-# inner_text
-# sender
-# receiver
-# cc
-#
