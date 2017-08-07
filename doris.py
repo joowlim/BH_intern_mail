@@ -134,11 +134,11 @@ def filter_mail(mailList, config):
 	return mailList
 
 def filter_mail_by_db(mailList, f):
-	if f["title_cond"] != [] and f["title_cond"] != [""]:
+	if f["title_cond"] != []:
 		mailList = list(filter(lambda x: contains_all(f["title_cond"], x.title), mailList))
-	if f["inner_text_cond"] != [] and f["inner_text_cond"] != [""]:
+	if f["inner_text_cond"] != []:
 		mailList = list(filter(lambda x: contains_all(f["inner_text_cond"], x.inner_text), mailList))
-	if f["sender_cond"] != [] and f["sender_cond"] != [""]:
+	if f["sender_cond"] != []:
 		mailList = list(filter(lambda x: equals_all(f["sender_cond"], x.from_), mailList))
 	return mailList
 
