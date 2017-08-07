@@ -56,6 +56,15 @@
 			$sql = 'UPDATE filter SET filter_name = "' . $_POST["filter_name"] . '", title_cond = "' . $_POST["title_cond"] . '", sender_cond = "' . $_POST["sender_cond"] . '", inner_text_cond = "' . $_POST["inner_text_cond"] . '", slack_channel = "' . $_POST["slack_channel"] . '" WHERE filter_id = ' . $_POST["filter_id"];
 		}
 		mysqli_query($conn, $sql);
+                if ($func == 'insert') {
+                        echo '<script>alert("Filter inserted!")</script>';
+                }
+                else if ($func == 'delete') {
+                        echo '<script>alert("Filter removed!")</script>';
+                }
+                else if ($func == 'modify' && $_POST["show_input"] != "true") {
+                        echo '<script>alert("Filter modified!")</script>';
+                }
 	}
 ?>
 <?php
