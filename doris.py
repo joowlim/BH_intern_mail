@@ -160,7 +160,7 @@ def delete_attachments_if_expired(inis):
 	
 def main(time_interval = 300):
 	# Open ini file
-	ini_file = open('../user_config.ini', 'r')
+	ini_file = open('./user_config.ini', 'r')
 	ini_lines = ini_file.readlines()
 
 	inis = dict()
