@@ -142,9 +142,25 @@ def filter_mail_by_db(mailList, f):
 		mailList = list(filter(lambda x: equals_all(f["sender_cond"], x.from_), mailList))
 	return mailList
 
+def delete_attachments_if_expired(inis):
+	duration_day = inis['duration_day']
+	duration_second = int(duration_day)
+
+	attachment_path = inis['attachment_path']
+	current_time = datetime.datetime.now()
+	
+	for path, dirs, files in os.walk(attachment_path) :
+		for file in files :
+			file_time = datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(path,file)))
+			elapsed_time = (current_time - file_time).total_seconds()
+			if elapsed_time > duration_second :
+				os.remove(os.path.join(path,file))
+				
+
+	
 def main(time_interval = 300):
 	# Open ini file
-	ini_file = open('./user_config.ini', 'r')
+	ini_file = open('../user_config.ini', 'r')
 	ini_lines = ini_file.readlines()
 
 	inis = dict()
@@ -159,7 +175,6 @@ def main(time_interval = 300):
 		time_file = open('./last_time', 'r')
 	except IOError:
 		sys.exit("Could not read file : %s" % "./last_time")
-	
 	time_line = time_file.readline().strip('\n')
 	time_file.close()
 
@@ -169,7 +184,6 @@ def main(time_interval = 300):
 						int(time_line.split('-')[2].split()[1].split(":")[0]),
 						int(time_line.split('-')[2].split()[1].split(":")[1]),
 						int(time_line.split('-')[2].split()[1].split(":")[2]))
-
 	#account and passwords
 	accountorigin = inis['account_name']
 	passwordorigin = inis['account_password']
@@ -178,8 +192,11 @@ def main(time_interval = 300):
 	for accounts in accountlist:
 		mailget(accounts,passwordlist[accountlist.index(accounts)],inis,last_parse_time)
 
+	# delete file if expired
+	delete_attachments_if_expired(inis)
+	
 	# start new connection simultaneously
-	threading.Timer(time_interval, main).start() # in second
+	threading.Timer(time_interval, main,args=[time_interval,]).start() # in second
 
 def mailget(account,password,inis,last_parse_time):
 	# login
