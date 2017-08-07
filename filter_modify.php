@@ -64,6 +64,7 @@
 	
 	if(!$user_config) {
 		echo 'cannot read config file : ' . $user_config ;
+		exit();
 	}
 	
 	while(!feof($user_config)) {
