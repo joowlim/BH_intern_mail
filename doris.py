@@ -41,15 +41,15 @@ class SlackBot:
 
 		self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
 
-	def sendPlainMessage(self, _channel, _title, _text, _date, timezone, _from, _to, attachment, attach_url, max_char):
+	def sendPlainMessage(self, _channel, _title, _text, _date, timezone, _from, _to, attachment, attach_url, max_char, filter_name):
 		post_text = "Title : " + _title + "\nFrom : " + _from + "\nTo : " + _to + "\nDate : " + _date + " " + timezone + "\nText : \n" + _text[:max_char]
 		if len(_text) > max_char :
 			post_text += " ..."
-
 		slacker_attachment = dict()
+		slacker_attachment['pretext'] = "*" + filter_name + "*"
 		slacker_attachment['text'] = post_text
 		slacker_attachment['color'] = self.color[0]#self.color[self.current_color_idx]
-		slacker_attachment['fields'] = []
+		slacker_attachment['mrkdwn_in'] = ['pretext']
 		
 		attach_index = 1
 		if attachment:
@@ -357,14 +357,15 @@ def mailget(account,password,inis,last_parse_time):
 	curs = conn.cursor()
 
 # filter mail
-	mail_sql = "SELECT filter_id, title_cond, inner_text_cond, sender_cond, slack_channel FROM filter ORDER BY filter_id ASC" 
+	mail_sql = "SELECT filter_id, title_cond, inner_text_cond, sender_cond, slack_channel, filter_name FROM filter ORDER BY filter_id ASC" 
 	curs.execute(mail_sql)
 
 	filters = []
 
-	for (filter_id, title_cond, inner_text_cond, sender_cond, slack_channel) in curs:
+	for (filter_id, title_cond, inner_text_cond, sender_cond, slack_channel,filter_name) in curs:
 		temp_map = {}
 		temp_map["filter_id"] = filter_id
+		
 		if title_cond:
 			temp_map["title_cond"] = title_cond.split(", ")
 		else:
@@ -378,7 +379,7 @@ def mailget(account,password,inis,last_parse_time):
 		else:
 			temp_map["sender_cond"] = []
 		temp_map["slack_channel"] = slack_channel
-
+		temp_map["filter_name"] = filter_name
 		filters.append(temp_map)
 	
 	for f in filters:
@@ -410,7 +411,7 @@ def mailget(account,password,inis,last_parse_time):
 			conn.commit()
 			
 			# post on slack
-			slackBot.sendPlainMessage(f["slack_channel"], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.timezone, mail_instance.from_, account, mail_instance.attachment, inis['attachment_url'], int(inis['max_text_chars']))
+			slackBot.sendPlainMessage(f["slack_channel"], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.timezone, mail_instance.from_, account, mail_instance.attachment, inis['attachment_url'], int(inis['max_text_chars']),f['filter_name'])
 
 	#close the connection
 	conn.close()
