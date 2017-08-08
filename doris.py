@@ -181,7 +181,8 @@ def main(time_interval = 600):
 	# Open ini file
 	ini_file = open('./user_config.ini', 'r')
 	ini_lines = ini_file.readlines()
-
+	ini_file.close()
+	
 	inis = dict()
 
 	for ini_line in ini_lines:
