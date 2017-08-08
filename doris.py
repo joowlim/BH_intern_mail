@@ -1,8 +1,26 @@
-import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading, sys, base64
+import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading, sys, re
 from email.header import decode_header
 from slacker import Slacker
 
 month_name_list = ["dummy", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+def remove_double_space(text):
+	return re.sub(' +', ' ', text.replace("\t", " "))
+
+def remove_tag(text):
+	while text.find("<") != -1:
+		start_index = text.find("<")
+		end_index = start_index
+		while text[end_index] != '>':
+			end_index += 1
+		text = text[:start_index] + text[end_index+1:]
+	while text.find("</") != -1:
+		start_index = text.find("</")
+		end_index = start_index
+		while text[end_index] != '>':
+			end_index += 1
+		text = text[:start_index] + text[end_index+1:]
+	return text
 
 class SlackBot:
 
@@ -30,7 +48,7 @@ class SlackBot:
 
 		slacker_attachment = dict()
 		slacker_attachment['text'] = post_text
-		slacker_attachment['color'] = self.color[self.current_color_idx]
+		slacker_attachment['color'] = self.color[0]#self.color[self.current_color_idx]
 		slacker_attachment['fields'] = []
 		
 		attach_index = 1
@@ -43,8 +61,8 @@ class SlackBot:
 			slacker_attachment['text'] += link_string
 			
 		att = [slacker_attachment]
-		self.slacker.chat.post_message(channel=_channel,attachments=att,username="Mail_parrot");
-		self.current_color_idx = (self.current_color_idx+1) % 2
+		self.slacker.chat.post_message(channel=_channel,attachments=att,username="mail_notification_bot");
+		#self.current_color_idx = (self.current_color_idx+1) % 2
 
 class Mail:
 	# to, attachment is a list, remainder is string
@@ -158,7 +176,7 @@ def delete_attachments_if_expired(inis):
 				
 
 	
-def main(time_interval = 300):
+def main(time_interval = 600):
 	# Open ini file
 	ini_file = open('./user_config.ini', 'r')
 	ini_lines = ini_file.readlines()
@@ -241,10 +259,19 @@ def mailget(account,password,inis,last_parse_time):
 
 				to_decode = decode_header(msg['date'])
 				mail_date = decode_if_byte(to_decode[0][0], to_decode[0][1]).split()
-				day = int(mail_date[1])
-				month = month_name_list.index(mail_date[2])
-				year = int(mail_date[3])
-				time = mail_date[4].split(":")
+				day = 0
+				month = 0
+				time  = []
+				try:
+					day = int(mail_date[1])
+					month = month_name_list.index(mail_date[2])
+					year = int(mail_date[3])
+					time = mail_date[4].split(":")
+				except ValueError:
+					day = int(mail_date[0])
+					month = month_name_list.index(mail_date[1])
+					year = int(mail_date[2])
+					time = mail_date[3].split(":")
 				dt = datetime.datetime(year, month, day, int(time[0]), int(time[1]), int(time[2]))
 				mail_date = dt.strftime('%Y-%m-%d %H:%M:%S')
 				
@@ -280,6 +307,8 @@ def mailget(account,password,inis,last_parse_time):
 
 				# inner text
 				inner_text = decode_if_byte(get_text(msg), 'utf-8')
+				if inner_text[0] == '<' :
+					inner_text = remove_double_space(remove_tag(inner_text).strip())
 
 		# already parsed every mail
 		if parse_end :
