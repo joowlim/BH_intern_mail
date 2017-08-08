@@ -260,7 +260,7 @@ def mailget(account,password,inis,last_parse_time):
 
 				to_decode = decode_header(msg['date'])
 				mail_date = decode_if_byte(to_decode[0][0], to_decode[0][1]).split()
-				print(mail_date)
+				
 				day = 0
 				month = 0
 				time  = []
