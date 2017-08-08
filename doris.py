@@ -314,7 +314,7 @@ def mailget(account,password,inis,last_parse_time):
 				# inner text
 				inner_text = decode_if_byte(get_text(msg), 'utf-8')
 				if inner_text[0] == '<' :
-					inner_text = remove_double_space(remove_tag(inner_text).strip())
+					inner_text = remove_double_space(remove_tag(inner_text.replace("&nbsp;"," ").replace("&lt;","<").replace("&gt;",">").replace("&amp;","&").replace("&quot;",'"').replace("&apos;","'").replace("&cent;","¢").replace("&copy;","©").replace("&reg;","®")).strip())
 
 		# already parsed every mail
 		if parse_end :
