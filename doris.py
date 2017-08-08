@@ -41,8 +41,8 @@ class SlackBot:
 
 		self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
 
-	def sendPlainMessage(self, _channel, _title, _text, _date, _from, _to, attachment, attach_url, max_char):
-		post_text = "Title : " + _title + "\nFrom : " + _from + "\nTo : " + _to + "\nDate : " + _date + "\nText : \n" + _text[:max_char]
+	def sendPlainMessage(self, _channel, _title, _text, _date, timezone, _from, _to, attachment, attach_url, max_char):
+		post_text = "Title : " + _title + "\nFrom : " + _from + "\nTo : " + _to + "\nDate : " + _date + " " + timezone + "\nText : \n" + _text[:max_char]
 		if len(_text) > max_char :
 			post_text += " ..."
 
@@ -66,7 +66,7 @@ class SlackBot:
 
 class Mail:
 	# to, attachment is a list, remainder is string
-	def __init__(self, from_, to, cc, mail_date, title, inner_text, attachment):
+	def __init__(self, from_, to, cc, mail_date, timezone, title, inner_text, attachment):
 		self.from_ = from_
 		self.to = to
 		self.cc = cc
@@ -74,6 +74,7 @@ class Mail:
 		self.title = title
 		self.inner_text = inner_text
 		self.attachment = attachment
+		self.timezone = timezone
 
 def decode_if_byte(str_, encoding):
 	try:
@@ -259,19 +260,24 @@ def mailget(account,password,inis,last_parse_time):
 
 				to_decode = decode_header(msg['date'])
 				mail_date = decode_if_byte(to_decode[0][0], to_decode[0][1]).split()
+				print(mail_date)
 				day = 0
 				month = 0
 				time  = []
+				timezone = ""
 				try:
 					day = int(mail_date[1])
 					month = month_name_list.index(mail_date[2])
 					year = int(mail_date[3])
 					time = mail_date[4].split(":")
+					timezone = mail_date[5]
 				except ValueError:
 					day = int(mail_date[0])
 					month = month_name_list.index(mail_date[1])
 					year = int(mail_date[2])
 					time = mail_date[3].split(":")
+					timezone = mail_date[4]
+				timezone = "UTC " + timezone[:3] + ":" + timezone[3:]
 				dt = datetime.datetime(year, month, day, int(time[0]), int(time[1]), int(time[2]))
 				mail_date = dt.strftime('%Y-%m-%d %H:%M:%S')
 				
@@ -343,7 +349,7 @@ def mailget(account,password,inis,last_parse_time):
 				except IOError:
 					sys.exit("Could not find directory : %s" % path)
 
-		mail_one = Mail(from_, to, cc,  mail_date, title, inner_text, attachment)
+		mail_one = Mail(from_, to, cc,  mail_date, timezone, title, inner_text, attachment)
 		mailList.append(mail_one)
 	
 	# connect to db
@@ -404,7 +410,7 @@ def mailget(account,password,inis,last_parse_time):
 			conn.commit()
 			
 			# post on slack
-			slackBot.sendPlainMessage(f["slack_channel"], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.from_, account, mail_instance.attachment, inis['attachment_url'], int(inis['max_text_chars']))
+			slackBot.sendPlainMessage(f["slack_channel"], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.timezone, mail_instance.from_, account, mail_instance.attachment, inis['attachment_url'], int(inis['max_text_chars']))
 
 	#close the connection
 	conn.close()
