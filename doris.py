@@ -1,4 +1,4 @@
-import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading, sys, re
+import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading, sys, re, logging
 from email.header import decode_header
 from slacker import Slacker
 
@@ -194,6 +194,10 @@ def delete_mail_if_expired(inis) :
 	conn.close()
 	
 def main(time_interval = 600):
+	# initialize logging
+	logging.basicConfig(filename="mail.log", level=logging.INFO, format="%(message)s (%(asctime)s)", datefmt="%Y/%m/%d %H:%M:%S %Z")
+	logging.info("Mail parsing start!")
+
 	# Open ini file
 	ini_file = open('./user_config.ini', 'r')
 	ini_lines = ini_file.readlines()
@@ -231,9 +235,12 @@ def main(time_interval = 600):
 	# delete file if expired
 	delete_attachments_if_expired(inis)
 	
+	# logging
+	logging.info("Mail parsing end!")
+  
 	# delete mail if expired 
 	delete_mail_if_expired(inis)
-	
+  
 	# start new connection simultaneously
 	threading.Timer(time_interval, main,args=[time_interval,]).start() # in second
 
@@ -434,7 +441,6 @@ def mailget(account,password,inis,last_parse_time):
 				curs.execute(mail_log_sql, (mail_instance.from_, receiver, str(current_row_id), 1))
 
 
-
 			# commit the connection
 			conn.commit()
 			
@@ -447,10 +453,6 @@ def mailget(account,password,inis,last_parse_time):
 	# terminate connection
 	mail.close()
 	mail.logout()
-
-	# notification to user
-	print ("Mail updated!")
-	sys.stdout.flush()
 
 def wrong_parameter():
 	print("Wrong parameter")
