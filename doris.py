@@ -27,7 +27,7 @@ class SlackBot:
 	def __init__(self,token):
 		self.slacker = Slacker(token)
 		self.current_color_idx = 0
-		self.color = ['#36a64f','#8f1253']
+		self.color = '#36a64f'
 
 	def sendCustomizedMessage(self,_channel, _title, _text, _pretext='', _link='',):
 		attachment = dict()
@@ -47,22 +47,26 @@ class SlackBot:
 			post_text += " ..."
 		slacker_attachment = dict()
 		slacker_attachment['pretext'] = "*" + filter_name + "*"
-		slacker_attachment['text'] = post_text
-		slacker_attachment['color'] = self.color[0]#self.color[self.current_color_idx]
+		slacker_attachment['color'] = self.color
 		slacker_attachment['mrkdwn_in'] = ['pretext']
 		
 		attach_index = 1
 		if attachment:
-			slacker_attachment['text'] += "\nAttachment\n"
+			post_text += "\nAttachment\n"
 		for attach in attachment:
 			attachment_text = "Attachment " + str(attach_index) + " : " + attach
 			attach_index += 1
 			link_string = "\n<" + attach_url + attach + "|" + attachment_text + ">"
-			slacker_attachment['text'] += link_string
+			post_text += link_string
 			
+		inner_fields = dict()
+		inner_fields['value'] = post_text
+		inner_fields['short'] = 'false'
+		
+		slacker_attachment['fields'] = [inner_fields]
 		att = [slacker_attachment]
 		self.slacker.chat.post_message(channel=_channel,attachments=att,username="mail_notification_bot");
-		#self.current_color_idx = (self.current_color_idx+1) % 2
+		
 
 class Mail:
 	# to, attachment is a list, remainder is string
