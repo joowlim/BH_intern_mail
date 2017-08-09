@@ -420,6 +420,7 @@ def mailget(account,password,inis,last_parse_time):
 
 	# notification to user
 	print ("Mail updated!")
+	sys.stdout.flush()
 
 def wrong_parameter():
 	print("Wrong parameter")
