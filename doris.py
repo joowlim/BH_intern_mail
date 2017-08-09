@@ -324,7 +324,7 @@ def mailget(account,password,inis,last_parse_time):
 					if dt >= last_parse_time :
 						# save last time
 						time_file = open('last_time', 'w')
-						time_file.write(str(mail_date))
+						time_file.write(str(dt.strftime('%Y-%m-%d %H:%M:%S')))
 						time_file.close()
 					last_time_saved = True
 				
