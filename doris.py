@@ -162,7 +162,7 @@ def filter_mail_by_db(mailList, f):
 	return mailList
 
 def delete_attachments_if_expired(inis):
-	duration_day = inis['duration_day']
+	duration_day = inis['attachment_duration_day']
 	duration_second = int(duration_day) * 24 * 60 * 60
 
 	attachment_path = inis['attachment_path']
@@ -176,6 +176,22 @@ def delete_attachments_if_expired(inis):
 				os.remove(os.path.join(path,file))
 				
 
+def delete_mail_if_expired(inis) :
+	
+	conn = pymysql.connect(host=inis['server'],user=inis['user'], password=inis['password'], db=inis['schema'],charset='utf8')
+	curs = conn.cursor()
+	
+	mail_duration_day = inis['mail_log_duration_day']
+
+# filter mail
+	mail_log_delete_sql = "DELETE FROM mail_log WHERE mail_id in (SELECT mail_id FROM mail WHERE mail_date BETWEEN DATE_SUB(NOW(), INTERVAL " + mail_duration_day + " DAY) AND NOW())"
+	mail_delete_sql = "DELETE FROM mail WHERE mail_date BETWEEN DATE_SUB(NOW(), INTERVAL " + mail_duration_day + " DAY) AND NOW()"
+
+	curs.execute(mail_log_delete_sql)
+	curs.execute(mail_delete_sql)
+	
+	conn.commit()
+	conn.close()
 	
 def main(time_interval = 600):
 	# initialize logging
@@ -221,7 +237,10 @@ def main(time_interval = 600):
 	
 	# logging
 	logging.info("Mail parsing end!")
-
+  
+	# delete mail if expired 
+	delete_mail_if_expired(inis)
+  
 	# start new connection simultaneously
 	threading.Timer(time_interval, main,args=[time_interval,]).start() # in second
 
@@ -285,9 +304,20 @@ def mailget(account,password,inis,last_parse_time):
 					year = int(mail_date[2])
 					time = mail_date[3].split(":")
 					timezone = mail_date[4]
-				timezone = "UTC " + timezone[:3] + ":" + timezone[3:]
+					
+				# timezone operation
+				timezone_deltatime = datetime.timedelta(hours = int(timezone[1:3]), minutes = int(timezone[3:]))
 				dt = datetime.datetime(year, month, day, int(time[0]), int(time[1]), int(time[2]))
+				
+				# save timezone string before the operation
 				mail_date = dt.strftime('%Y-%m-%d %H:%M:%S')
+				timezone = "UTC " + timezone[:3] + ":" + timezone[3:]
+				
+				# UTC 00:00, for last_time file
+				if timezone[0] == '+':
+					dt = dt - timezone_deltatime
+				else:
+					dt = dt + timezone_deltatime
 				
 				if not last_time_saved:
 					# New mail arrived
