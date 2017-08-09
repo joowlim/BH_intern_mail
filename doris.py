@@ -310,6 +310,7 @@ def mailget(account,password,inis,last_parse_time):
 					timezone = mail_date[4]
 					
 				# timezone operation
+				timezone_sign = timezone[0]
 				timezone_deltatime = datetime.timedelta(hours = int(timezone[1:3]), minutes = int(timezone[3:]))
 				dt = datetime.datetime(year, month, day, int(time[0]), int(time[1]), int(time[2]))
 				
@@ -318,7 +319,7 @@ def mailget(account,password,inis,last_parse_time):
 				timezone = "UTC " + timezone[:3] + ":" + timezone[3:]
 				
 				# UTC 00:00, for last_time file
-				if timezone[0] == '+':
+				if timezone_sign == '+':
 					dt = dt - timezone_deltatime
 				else:
 					dt = dt + timezone_deltatime
