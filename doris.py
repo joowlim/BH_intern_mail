@@ -403,10 +403,7 @@ def mailget(account,password,inis,last_parse_time):
 				mail_log_sql = "INSERT INTO mail_log (sender, receiver, mail_id, is_ref) VALUES (%s, %s, %s, %s)"
 				curs.execute(mail_log_sql, (mail_instance.from_, receiver, str(current_row_id), 1))
 
-			# Update attachment table
-			for attachment_filename in mail_instance.attachment:
-				mail_attachment_sql = "INSERT INTO attachment (each_attachment, mail_id) VALUES (%s, %s)"
-				curs.execute(mail_attachment_sql, (attachment_filename, current_row_id));
+
 
 			# commit the connection
 			conn.commit()
