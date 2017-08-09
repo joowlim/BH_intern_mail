@@ -283,14 +283,15 @@ def mailget(account,password,inis,last_parse_time):
 				timezone_deltatime = datetime.timedelta(hours = int(timezone[1:3]), minutes = int(timezone[3:]))
 				dt = datetime.datetime(year, month, day, int(time[0]), int(time[1]), int(time[2]))
 				
-				# UTC 00:00
-				if timezone[0] == '+':
-					dt = dt - timezone_deltatime
-				else
-					dt = dt + timezone_deltatime
-					
+				# save timezone string before the operation
 				mail_date = dt.strftime('%Y-%m-%d %H:%M:%S')
 				timezone = "UTC " + timezone[:3] + ":" + timezone[3:]
+				
+				# UTC 00:00, for last_time file
+				if timezone[0] == '+':
+					dt = dt - timezone_deltatime
+				else:
+					dt = dt + timezone_deltatime
 				
 				if not last_time_saved:
 					# New mail arrived
