@@ -162,7 +162,7 @@ def filter_mail_by_db(mailList, f):
 	return mailList
 
 def delete_attachments_if_expired(inis):
-	duration_day = inis['duration_day']
+	duration_day = inis['attachment_duration_day']
 	duration_second = int(duration_day) * 24 * 60 * 60
 
 	attachment_path = inis['attachment_path']
@@ -176,6 +176,22 @@ def delete_attachments_if_expired(inis):
 				os.remove(os.path.join(path,file))
 				
 
+def delete_mail_if_expired(inis) :
+	
+	conn = pymysql.connect(host=inis['server'],user=inis['user'], password=inis['password'], db=inis['schema'],charset='utf8')
+	curs = conn.cursor()
+	
+	mail_duration_day = inis['mail_log_duration_day']
+
+# filter mail
+	mail_log_delete_sql = "DELETE FROM mail_log WHERE mail_id in (SELECT mail_id FROM mail WHERE mail_date BETWEEN DATE_SUB(NOW(), INTERVAL " + mail_duration_day + " DAY) AND NOW())"
+	mail_delete_sql = "DELETE FROM mail WHERE mail_date BETWEEN DATE_SUB(NOW(), INTERVAL " + mail_duration_day + " DAY) AND NOW()"
+
+	curs.execute(mail_log_delete_sql)
+	curs.execute(mail_delete_sql)
+	
+	conn.commit()
+	conn.close()
 	
 def main(time_interval = 600):
 	# Open ini file
@@ -214,6 +230,9 @@ def main(time_interval = 600):
 
 	# delete file if expired
 	delete_attachments_if_expired(inis)
+	
+	# delete mail if expired 
+	delete_mail_if_expired(inis)
 	
 	# start new connection simultaneously
 	threading.Timer(time_interval, main,args=[time_interval,]).start() # in second
