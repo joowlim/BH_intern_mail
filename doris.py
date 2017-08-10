@@ -154,7 +154,7 @@ def deleteMailIfExpired(inis):
 	conn.commit()
 	conn.close()
   
-def main(time_interval = 600, mode = 0):
+def main(time_interval = 610, mode = 0):
 	# initialize logging
 	logging.basicConfig(filename = "mail.log", level = logging.INFO, format = "%(message)s (%(asctime)s)", datefmt = "%Y/%m/%d %H:%M:%S %Z")
 	logging.info("Mail parsing start!")
