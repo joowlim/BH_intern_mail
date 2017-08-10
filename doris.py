@@ -154,7 +154,7 @@ def deleteMailIfExpired(inis):
 	conn.commit()
 	conn.close()
   
-def main(time_interval = 610, mode = 0):
+def main(time_interval = 30, mode = 0):
 	# initialize logging
 	logging.basicConfig(filename = "mail.log", level = logging.INFO, format = "%(message)s (%(asctime)s)", datefmt = "%Y/%m/%d %H:%M:%S %Z")
 	logging.info("Mail parsing start!")
@@ -208,8 +208,8 @@ def main(time_interval = 610, mode = 0):
   
 	# report if no mail entire day
 	checkNoMailEntireDay(slackBot,inis)
-  
-  	mode_change = 0
+
+	mode_change = 0
 	# start new connection simultaneously
 	threading.Timer(time_interval, main, args = [time_interval, mode_change]).start() # in second
 
@@ -255,7 +255,7 @@ def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 	message_list.reverse()
 
 	# list of mail instances
-	mail_list = []
+	mailList = []
 	parse_end = False
 
 	last_time_saved = False
@@ -436,9 +436,10 @@ def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 		filters.append(temp_map)
 	
 	for f in filters:
-		mail_list_filtered = filterMailByDb(mail_list, f)
+		mailList.reverse()
+		mailList_filtered = filterMailByDb(mailList, f)
 		
-		for mail_instance in mail_list_filtered:
+		for mail_instance in mailList_filtered:
 			# Update mail table
 			mail_sql = "INSERT INTO mail (title, inner_text, mail_date, filter_id) VALUES (%s, %s, %s, %s)" #datetime.date(y,m,d)
 			curs.execute(mail_sql, (mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, f["filter_id"]))
