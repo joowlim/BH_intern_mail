@@ -153,8 +153,8 @@ def deleteMailIfExpired(inis):
 	
 	conn.commit()
 	conn.close()
-	
-def main(time_interval = 600):
+  
+def main(time_interval = 610, mode = 0):
 	# initialize logging
 	logging.basicConfig(filename = "mail.log", level = logging.INFO, format = "%(message)s (%(asctime)s)", datefmt = "%Y/%m/%d %H:%M:%S %Z")
 	logging.info("Mail parsing start!")
@@ -194,7 +194,7 @@ def main(time_interval = 600):
 	password_list = password_origin.split(',')
   	slackBot = SlackBot(inis['slack_token'])
 	for accounts in account_list:
-		mailGet(accounts, password_list[account_list.index(accounts)], inis, last_parse_time,slackBot)
+		mailGet(accounts, password_list[account_list.index(accounts)], inis, last_parse_time, slackBot, mode)
 
 
 	# delete file if expired
@@ -209,8 +209,9 @@ def main(time_interval = 600):
 	# report if no mail entire day
 	check_no_mail_entire_day(slackBot,inis)
   
+  	mode_change = 0
 	# start new connection simultaneously
-	threading.Timer(time_interval, main, args = [time_interval,]).start() # in second
+	threading.Timer(time_interval, main, args = [time_interval, mode_change]).start() # in second
 
 def check_no_mail_entire_day(slackBot, inis):
 	global last_no_mail_reported_time
@@ -240,10 +241,7 @@ def check_no_mail_entire_day(slackBot, inis):
 		last_no_mail_reported_time = datetime.datetime.utcnow()
 		conn.close()
 
-	
-
-def mailGet(account,password,inis,last_parse_time,slackBot):
-
+def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 	# login
 	mail = imaplib.IMAP4_SSL('imap.gmail.com')
 	#mail.login(inis['account_name'],inis['account_password'])
@@ -321,12 +319,27 @@ def mailGet(account,password,inis,last_parse_time,slackBot):
 				
 				if not last_time_saved:
 					# New mail arrived
-					if dt >= last_parse_time:
-						# save last time
-						time_file = open('last_time', 'w')
-						time_file.write(str(dt.strftime('%Y-%m-%d %H:%M:%S')))
+					if dt >= last_parse_time :
+						# get last parsing time
+						try:
+							time_file = open('./last_time', 'r')
+						except IOError:
+							sys.exit("Could not read file : %s" % "./last_time")
+						time_line = time_file.readline().strip('\n')
 						time_file.close()
-					last_time_saved = True
+
+						most_recent_time = datetime.datetime(int(time_line.split('-')[0]),
+											int(time_line.split('-')[1]),
+											int(time_line.split('-')[2].split()[0]),
+											int(time_line.split('-')[2].split()[1].split(":")[0]),
+											int(time_line.split('-')[2].split()[1].split(":")[1]),
+											int(time_line.split('-')[2].split()[1].split(":")[2]))
+						# save last time
+						if most_recent_time <= dt:
+							time_file = open('last_time', 'w')
+							time_file.write(str(dt.strftime('%Y-%m-%d %H:%M:%S')))
+							time_file.close()
+							last_time_saved = True
 				
 				if last_parse_time >= dt:
 					parse_end = True
@@ -387,17 +400,19 @@ def mailGet(account,password,inis,last_parse_time,slackBot):
 				except IOError:
 					sys.exit("Could not find directory : %s" % path)
 
-		mail_one = Mail(from_, to, cc, mail_date, timezone, title, inner_text, attachment)
-		mail_list.append(mail_one)
+		mail_one = Mail(from_, to, cc,  mail_date, timezone, title, inner_text, attachment)
+		mailList.append(mail_one)
+		if mode==1:
+			# recentonce mode
+			break
 	
 	# connect to db
-	conn = pymysql.connect(host = inis['server'], user = inis['user'], password = inis['password'], db = inis['schema'], charset = 'utf8')
+	conn = pymysql.connect(host = inis['server'],user = inis['user'], password = inis['password'], db = inis['schema'], charset = 'utf8')
 	curs = conn.cursor()
 
 # filter mail
 	mail_sql = "SELECT filter_id, title_cond, inner_text_cond, sender_cond, slack_channel, filter_name FROM filter ORDER BY filter_id ASC" 
 	curs.execute(mail_sql)
-
 	filters = []
 
 	for (filter_id, title_cond, inner_text_cond, sender_cond, slack_channel, filter_name) in curs:
@@ -470,6 +485,7 @@ def runH():
 	print("\t\t-t [INT] : start program with given time interval for crawling (in second)")
 	print("\t\t-h : show help command")
 
+
 def runT(t):
 	main(t)
 
@@ -483,7 +499,7 @@ def isInt(s):
 if __name__ == "__main__":
 	# without argument
 	if len(sys.argv) == 1:
-		main()
+		main(mode=1)
 
 	# one argument : -i, -h (for -h option, only works alone)
 	elif len(sys.argv) == 2:
@@ -498,8 +514,10 @@ if __name__ == "__main__":
 
 	# two argument : -t [INT]
 	elif len(sys.argv) == 3:
+
 		if sys.argv[1] == "-t" and isInt(sys.argv[2]):
-			runT(int(sys.argv[2]))
+			runT(time_interval = int(sys.argv[2]), mode=1)
+
 		else:
 			wrongParameter()
 
