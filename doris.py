@@ -3,6 +3,8 @@ from email.header import decode_header
 from slacker import Slacker
 
 month_name_list = ["dummy", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+last_no_mail_reported_time = datetime.datetime.utcnow()
+
 
 def removeDoubleSpace(text):
 	return re.sub(' +', ' ', text.replace("\t", " "))
@@ -26,7 +28,6 @@ class SlackBot:
 
 	def __init__(self, token):
 		self.slacker = Slacker(token)
-		self.current_color_idx = 0
 		self.color = '#36a64f'
 
 	def sendCustomizedMessage(self, _channel, _title, _text, _pretext = '', _link = '',):
@@ -38,8 +39,11 @@ class SlackBot:
 		attachment['text'] = _text
 		attachment['mrkdwn_in'] = ['text', 'title_link']
 		att = [attachment]
-
-		self.slacker.chat.post_message(channel = _channel, text = None, attachments = att)
+		self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
+    
+	def send_no_mail_report(self, channel, last_time):
+		text = last_time + " 이후로 수신한 메일이 없습니다."
+		self.slacker.chat.post_message(channel=channel,text=text,username="mail_notification_bot")
 
 	def sendPlainMessage(self, _channel, _title, _text, _date, timezone, _from, _to, attachment, attach_url, max_char, filter_name):
 		post_text = "Title : " + _title + "\nFrom : " + _from + "\nTo : " + _to + "\nDate : " + _date + " " + timezone + "\nText : \n" + _text[:max_char]
@@ -174,7 +178,7 @@ def main(time_interval = 600):
 		sys.exit("Could not read file : %s" % "./last_time")
 	time_line = time_file.readline().strip('\n')
 	time_file.close()
-
+	
 	last_parse_time = datetime.datetime(int(time_line.split('-')[0]),
 						int(time_line.split('-')[1]),
 						int(time_line.split('-')[2].split()[0]),
@@ -183,12 +187,15 @@ def main(time_interval = 600):
 						int(time_line.split('-')[2].split()[1].split(":")[2]))
 
 	#account and passwords
+
 	account_origin = inis['account_name']
 	password_origin = inis['account_password']
 	account_list = account_origin.split(',')
 	password_list = password_origin.split(',')
+  	slackBot = SlackBot(inis['slack_token'])
 	for accounts in account_list:
-		mailGet(accounts, password_list[account_list.index(accounts)], inis, last_parse_time)
+		mailGet(accounts, password_list[account_list.index(accounts)], inis, last_parse_time,slackBot)
+
 
 	# delete file if expired
 	deleteAttachmentsIfExpired(inis)
@@ -196,13 +203,47 @@ def main(time_interval = 600):
 	# logging
 	logging.info("Mail parsing end!")
   
-	# delete mail if expired 
+	# delete mail if expired 	
 	deleteMailIfExpired(inis)
+  
+	# report if no mail entire day
+	check_no_mail_entire_day(slackBot,inis)
   
 	# start new connection simultaneously
 	threading.Timer(time_interval, main, args = [time_interval,]).start() # in second
 
-def mailGet(account, password, inis, last_parse_time):
+def check_no_mail_entire_day(slackBot, inis):
+	global last_no_mail_reported_time
+	time_file = open('last_time', 'r')
+	time_line = time_file.readline().strip('\n')
+	time_file.close()
+	last_parse_time = datetime.datetime(int(time_line.split('-')[0]),
+						int(time_line.split('-')[1]),
+						int(time_line.split('-')[2].split()[0]),
+						int(time_line.split('-')[2].split()[1].split(":")[0]),
+						int(time_line.split('-')[2].split()[1].split(":")[1]),
+						int(time_line.split('-')[2].split()[1].split(":")[2]))
+	current = datetime.datetime.utcnow()
+	total_no_mail_time = (current - last_parse_time).total_seconds()
+	elapsed_time_from_last_no_mail_report = (current - last_no_mail_reported_time).total_seconds()
+		
+	one_day = 60 * 60 * 24
+	if total_no_mail_time > one_day and elapsed_time_from_last_no_mail_report > one_day:
+		conn = pymysql.connect(host=inis['server'],user=inis['user'], password=inis['password'], db=inis['schema'],charset='utf8')
+		curs = conn.cursor()
+		sql = "SELECT DISTINCT slack_channel FROM filter" ;
+		curs.execute(sql)
+		
+		for (each_channel) in curs :
+			slackBot.send_no_mail_report(each_channel[0], time_line)
+			
+		last_no_mail_reported_time = datetime.datetime.utcnow()
+		conn.close()
+
+	
+
+def mailGet(account,password,inis,last_parse_time,slackBot):
+
 	# login
 	mail = imaplib.IMAP4_SSL('imap.gmail.com')
 	#mail.login(inis['account_name'],inis['account_password'])
@@ -222,7 +263,7 @@ def mailGet(account, password, inis, last_parse_time):
 	last_time_saved = False
 
 	# initialize slack bot
-	slackBot = SlackBot(inis['slack_token'])
+
 	
 	for i in message_list: # messages I want to see
 		typ, msg_data = mail.fetch(i, '(RFC822)')
