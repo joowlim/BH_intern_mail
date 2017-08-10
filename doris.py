@@ -1,6 +1,7 @@
 import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading, sys, re, logging
 from email.header import decode_header
 from slacker import Slacker
+from logging.handlers import RotatingFileHandler
 
 month_name_list = ["dummy", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -151,15 +152,20 @@ def deleteMailIfExpired(inis):
 	conn.close()
 	
 def main(time_interval = 600):
-    	# remove logfile if the size exceed 1M
-    	if os.path.exists("./mail.log"):
-		if os.path.getsize("./mail.log") > 10**6:    	
-			open("./mail.log", "w").close()    	
+       	# initialize logging
+	logger = logging.getLogger("mail")
+	logger.setLevel(logging.INFO)
+	
+	handler = RotatingFileHandler("mail.log", maxBytes = 10**6, backupCount = 5)
+	handler.setLevel(logging.INFO)
+    
+	formatter = logging.Formatter("%(message)s (%(asctime)s)", "%Y/%m/%d %H:%M:%S %Z")	
+	handler.setFormatter(formatter)
 
-    	# initialize logging
-	logging.basicConfig(filename = "mail.log", level = logging.INFO, format = "%(message)s (%(asctime)s)", datefmt = "%Y/%m/%d %H:%M:%S %Z")
-	logging.info("Mail parsing start!")
+	logger.addHandler(handler)
 
+	# start mail parsing
+	logger.info("Mail parsing start!")
 	# Open ini file
 	ini_file = open('./user_config.ini', 'r')
 	ini_lines = ini_file.readlines()
@@ -199,7 +205,7 @@ def main(time_interval = 600):
 	deleteAttachmentsIfExpired(inis)
 	
 	# logging
-	logging.info("Mail parsing end!")
+	logger.info("Mail parsing end!")
   
 	# delete mail if expired 
 	deleteMailIfExpired(inis)
