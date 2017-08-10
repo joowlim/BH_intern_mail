@@ -192,7 +192,7 @@ def main(time_interval = 600):
 	password_origin = inis['account_password']
 	account_list = account_origin.split(',')
 	password_list = password_origin.split(',')
-  slackBot = SlackBot(inis['slack_token'])
+  	slackBot = SlackBot(inis['slack_token'])
 	for accounts in account_list:
 		mailGet(accounts, password_list[account_list.index(accounts)], inis, last_parse_time,slackBot)
 
@@ -206,8 +206,8 @@ def main(time_interval = 600):
 	# delete mail if expired 	
 	deleteMailIfExpired(inis)
   
-  # report if no mail entire day
-  check_no_mail_entire_day(slackBot,inis)
+	# report if no mail entire day
+	check_no_mail_entire_day(slackBot,inis)
   
 	# start new connection simultaneously
 	threading.Timer(time_interval, main, args = [time_interval,]).start() # in second
@@ -238,6 +238,7 @@ def check_no_mail_entire_day(slackBot, inis):
 			slackBot.send_no_mail_report(each_channel[0], time_line)
 			
 		last_no_mail_reported_time = datetime.datetime.utcnow()
+		conn.close()
 
 	
 
