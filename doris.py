@@ -4,6 +4,8 @@ from slacker import Slacker
 from logging.handlers import RotatingFileHandler
 
 month_name_list = ["dummy", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+last_no_mail_reported_time = datetime.datetime.utcnow()
+
 
 def removeDoubleSpace(text):
 	return re.sub(' +', ' ', text.replace("\t", " "))
@@ -27,7 +29,6 @@ class SlackBot:
 
 	def __init__(self, token):
 		self.slacker = Slacker(token)
-		self.current_color_idx = 0
 		self.color = '#36a64f'
 
 	def sendCustomizedMessage(self, _channel, _title, _text, _pretext = '', _link = '',):
@@ -39,8 +40,11 @@ class SlackBot:
 		attachment['text'] = _text
 		attachment['mrkdwn_in'] = ['text', 'title_link']
 		att = [attachment]
-
-		self.slacker.chat.post_message(channel = _channel, text = None, attachments = att)
+		self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
+    
+	def sendNoMailReport(self, channel, last_time):
+		text = last_time + " 이후로 수신한 메일이 없습니다."
+		self.slacker.chat.post_message(channel=channel,text=text,username="mail_notification_bot")
 
 	def sendPlainMessage(self, _channel, _title, _text, _date, timezone, _from, _to, attachment, attach_url, max_char, filter_name):
 		post_text = "Title : " + _title + "\nFrom : " + _from + "\nTo : " + _to + "\nDate : " + _date + " " + timezone + "\nText : \n" + _text[:max_char]
@@ -150,9 +154,9 @@ def deleteMailIfExpired(inis):
 	
 	conn.commit()
 	conn.close()
-	
-def main(time_interval = 600):
-       	# initialize logging
+
+def main(time_interval = 610, mode = 0):
+  # initialize logging
 	logger = logging.getLogger("mail")
 	logger.setLevel(logging.INFO)
 	
@@ -185,7 +189,7 @@ def main(time_interval = 600):
 		sys.exit("Could not read file : %s" % "./last_time")
 	time_line = time_file.readline().strip('\n')
 	time_file.close()
-
+	
 	last_parse_time = datetime.datetime(int(time_line.split('-')[0]),
 						int(time_line.split('-')[1]),
 						int(time_line.split('-')[2].split()[0]),
@@ -194,12 +198,15 @@ def main(time_interval = 600):
 						int(time_line.split('-')[2].split()[1].split(":")[2]))
 
 	#account and passwords
+
 	account_origin = inis['account_name']
 	password_origin = inis['account_password']
 	account_list = account_origin.split(',')
 	password_list = password_origin.split(',')
+	slackBot = SlackBot(inis['slack_token'])
 	for accounts in account_list:
-		mailGet(accounts, password_list[account_list.index(accounts)], inis, last_parse_time)
+		mailGet(accounts, password_list[account_list.index(accounts)], inis, last_parse_time, slackBot, mode)
+
 
 	# delete file if expired
 	deleteAttachmentsIfExpired(inis)
@@ -207,13 +214,45 @@ def main(time_interval = 600):
 	# logging
 	logger.info("Mail parsing end!")
   
-	# delete mail if expired 
+	# delete mail if expired 	
 	deleteMailIfExpired(inis)
   
-	# start new connection simultaneously
-	threading.Timer(time_interval, main, args = [time_interval,]).start() # in second
+	# report if no mail entire day
+	checkNoMailEntireDay(slackBot,inis)
 
-def mailGet(account, password, inis, last_parse_time):
+	mode_change = 0
+	# start new connection simultaneously
+	threading.Timer(time_interval, main, args = [time_interval, mode_change]).start() # in second
+
+def checkNoMailEntireDay(slackBot, inis):
+	global last_no_mail_reported_time
+	time_file = open('last_time', 'r')
+	time_line = time_file.readline().strip('\n')
+	time_file.close()
+	last_parse_time = datetime.datetime(int(time_line.split('-')[0]),
+						int(time_line.split('-')[1]),
+						int(time_line.split('-')[2].split()[0]),
+						int(time_line.split('-')[2].split()[1].split(":")[0]),
+						int(time_line.split('-')[2].split()[1].split(":")[1]),
+						int(time_line.split('-')[2].split()[1].split(":")[2]))
+	current = datetime.datetime.utcnow()
+	total_no_mail_time = (current - last_parse_time).total_seconds()
+	elapsed_time_from_last_no_mail_report = (current - last_no_mail_reported_time).total_seconds()
+		
+	one_day = 60 * 60 * 24
+	if total_no_mail_time > one_day and elapsed_time_from_last_no_mail_report > one_day:
+		conn = pymysql.connect(host=inis['server'],user=inis['user'], password=inis['password'], db=inis['schema'],charset='utf8')
+		curs = conn.cursor()
+		sql = "SELECT DISTINCT slack_channel FROM filter" ;
+		curs.execute(sql)
+		
+		for (each_channel) in curs :
+			slackBot.sendNoMailReport(each_channel[0], time_line)
+			
+		last_no_mail_reported_time = datetime.datetime.utcnow()
+		conn.close()
+
+def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 	# login
 	mail = imaplib.IMAP4_SSL('imap.gmail.com')
 	#mail.login(inis['account_name'],inis['account_password'])
@@ -232,9 +271,6 @@ def mailGet(account, password, inis, last_parse_time):
 
 	last_time_saved = False
 
-	# initialize slack bot
-	slackBot = SlackBot(inis['slack_token'])
-	
 	for i in message_list: # messages I want to see
 		typ, msg_data = mail.fetch(i, '(RFC822)')
 		for response_part in msg_data:
@@ -291,12 +327,27 @@ def mailGet(account, password, inis, last_parse_time):
 				
 				if not last_time_saved:
 					# New mail arrived
-					if dt >= last_parse_time:
-						# save last time
-						time_file = open('last_time', 'w')
-						time_file.write(str(dt.strftime('%Y-%m-%d %H:%M:%S')))
+					if dt >= last_parse_time :
+						# get last parsing time
+						try:
+							time_file = open('./last_time', 'r')
+						except IOError:
+							sys.exit("Could not read file : %s" % "./last_time")
+						time_line = time_file.readline().strip('\n')
 						time_file.close()
-					last_time_saved = True
+
+						most_recent_time = datetime.datetime(int(time_line.split('-')[0]),
+											int(time_line.split('-')[1]),
+											int(time_line.split('-')[2].split()[0]),
+											int(time_line.split('-')[2].split()[1].split(":")[0]),
+											int(time_line.split('-')[2].split()[1].split(":")[1]),
+											int(time_line.split('-')[2].split()[1].split(":")[2]))
+						# save last time
+						if most_recent_time <= dt:
+							time_file = open('last_time', 'w')
+							time_file.write(str(dt.strftime('%Y-%m-%d %H:%M:%S')))
+							time_file.close()
+							last_time_saved = True
 				
 				if last_parse_time >= dt:
 					parse_end = True
@@ -357,17 +408,19 @@ def mailGet(account, password, inis, last_parse_time):
 				except IOError:
 					sys.exit("Could not find directory : %s" % path)
 
-		mail_one = Mail(from_, to, cc, mail_date, timezone, title, inner_text, attachment)
+		mail_one = Mail(from_, to, cc,  mail_date, timezone, title, inner_text, attachment)
 		mail_list.append(mail_one)
+		if mode==1:
+			# recentonce mode
+			break
 	
 	# connect to db
-	conn = pymysql.connect(host = inis['server'], user = inis['user'], password = inis['password'], db = inis['schema'], charset = 'utf8')
+	conn = pymysql.connect(host = inis['server'],user = inis['user'], password = inis['password'], db = inis['schema'], charset = 'utf8')
 	curs = conn.cursor()
 
 # filter mail
 	mail_sql = "SELECT filter_id, title_cond, inner_text_cond, sender_cond, slack_channel, filter_name FROM filter ORDER BY filter_id ASC" 
 	curs.execute(mail_sql)
-
 	filters = []
 
 	for (filter_id, title_cond, inner_text_cond, sender_cond, slack_channel, filter_name) in curs:
@@ -391,6 +444,7 @@ def mailGet(account, password, inis, last_parse_time):
 		filters.append(temp_map)
 	
 	for f in filters:
+		mail_list.reverse()
 		mail_list_filtered = filterMailByDb(mail_list, f)
 		
 		for mail_instance in mail_list_filtered:
@@ -440,6 +494,7 @@ def runH():
 	print("\t\t-t [INT] : start program with given time interval for crawling (in second)")
 	print("\t\t-h : show help command")
 
+
 def runT(t):
 	main(t)
 
@@ -453,7 +508,7 @@ def isInt(s):
 if __name__ == "__main__":
 	# without argument
 	if len(sys.argv) == 1:
-		main()
+		main(mode=1)
 
 	# one argument : -i, -h (for -h option, only works alone)
 	elif len(sys.argv) == 2:
@@ -468,8 +523,10 @@ if __name__ == "__main__":
 
 	# two argument : -t [INT]
 	elif len(sys.argv) == 3:
+
 		if sys.argv[1] == "-t" and isInt(sys.argv[2]):
-			runT(int(sys.argv[2]))
+			runT(time_interval = int(sys.argv[2]), mode=1)
+
 		else:
 			wrongParameter()
 
