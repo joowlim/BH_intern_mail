@@ -208,8 +208,8 @@ def main(time_interval = 610, mode = 0):
   
 	# report if no mail entire day
 	checkNoMailEntireDay(slackBot,inis)
-  
-  	mode_change = 0
+
+	mode_change = 0
 	# start new connection simultaneously
 	threading.Timer(time_interval, main, args = [time_interval, mode_change]).start() # in second
 
@@ -401,7 +401,7 @@ def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 					sys.exit("Could not find directory : %s" % path)
 
 		mail_one = Mail(from_, to, cc,  mail_date, timezone, title, inner_text, attachment)
-		mailList.append(mail_one)
+		mail_list.append(mail_one)
 		if mode==1:
 			# recentonce mode
 			break
@@ -436,6 +436,7 @@ def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 		filters.append(temp_map)
 	
 	for f in filters:
+		mail_list.reverse()
 		mail_list_filtered = filterMailByDb(mail_list, f)
 		
 		for mail_instance in mail_list_filtered:
