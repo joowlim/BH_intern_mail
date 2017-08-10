@@ -41,7 +41,7 @@ class SlackBot:
 		att = [attachment]
 		self.slacker.chat.post_message(channel=_channel, text=None, attachments=att)
     
-	def send_no_mail_report(self, channel, last_time):
+	def sendNoMailReport(self, channel, last_time):
 		text = last_time + " 이후로 수신한 메일이 없습니다."
 		self.slacker.chat.post_message(channel=channel,text=text,username="mail_notification_bot")
 
@@ -192,7 +192,7 @@ def main(time_interval = 610, mode = 0):
 	password_origin = inis['account_password']
 	account_list = account_origin.split(',')
 	password_list = password_origin.split(',')
-  	slackBot = SlackBot(inis['slack_token'])
+	slackBot = SlackBot(inis['slack_token'])
 	for accounts in account_list:
 		mailGet(accounts, password_list[account_list.index(accounts)], inis, last_parse_time, slackBot, mode)
 
@@ -207,13 +207,13 @@ def main(time_interval = 610, mode = 0):
 	deleteMailIfExpired(inis)
   
 	# report if no mail entire day
-	check_no_mail_entire_day(slackBot,inis)
+	checkNoMailEntireDay(slackBot,inis)
   
   	mode_change = 0
 	# start new connection simultaneously
 	threading.Timer(time_interval, main, args = [time_interval, mode_change]).start() # in second
 
-def check_no_mail_entire_day(slackBot, inis):
+def checkNoMailEntireDay(slackBot, inis):
 	global last_no_mail_reported_time
 	time_file = open('last_time', 'r')
 	time_line = time_file.readline().strip('\n')
@@ -236,7 +236,7 @@ def check_no_mail_entire_day(slackBot, inis):
 		curs.execute(sql)
 		
 		for (each_channel) in curs :
-			slackBot.send_no_mail_report(each_channel[0], time_line)
+			slackBot.sendNoMailReport(each_channel[0], time_line)
 			
 		last_no_mail_reported_time = datetime.datetime.utcnow()
 		conn.close()
