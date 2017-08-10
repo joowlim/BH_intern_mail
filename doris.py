@@ -154,7 +154,7 @@ def deleteMailIfExpired(inis):
 	conn.commit()
 	conn.close()
   
-def main(time_interval = 30, mode = 0):
+def main(time_interval = 600, mode = 0):
 	# initialize logging
 	logging.basicConfig(filename = "mail.log", level = logging.INFO, format = "%(message)s (%(asctime)s)", datefmt = "%Y/%m/%d %H:%M:%S %Z")
 	logging.info("Mail parsing start!")
@@ -407,14 +407,12 @@ def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 			break
 	
 	# connect to db
-	print("connect to db")
 	conn = pymysql.connect(host = inis['server'],user = inis['user'], password = inis['password'], db = inis['schema'], charset = 'utf8')
 	curs = conn.cursor()
 
 # filter mail
 	mail_sql = "SELECT filter_id, title_cond, inner_text_cond, sender_cond, slack_channel, filter_name FROM filter ORDER BY filter_id ASC" 
 	curs.execute(mail_sql)
-	print("select filter")
 	filters = []
 
 	for (filter_id, title_cond, inner_text_cond, sender_cond, slack_channel, filter_name) in curs:
