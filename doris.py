@@ -192,8 +192,8 @@ def delete_mail_if_expired(inis) :
 	
 	conn.commit()
 	conn.close()
-	
-def main(time_interval = 600):
+  
+def main(time_interval = 30, mode = 0):
 	# initialize logging
 	logging.basicConfig(filename="mail.log", level=logging.INFO, format="%(message)s (%(asctime)s)", datefmt="%Y/%m/%d %H:%M:%S %Z")
 	logging.info("Mail parsing start!")
@@ -230,8 +230,7 @@ def main(time_interval = 600):
 	accountlist = accountorigin.split(',')
 	passwordlist = passwordorigin.split(',')
 	for accounts in accountlist:
-		mailget(accounts,passwordlist[accountlist.index(accounts)],inis,last_parse_time)
-
+		mailget(accounts,passwordlist[accountlist.index(accounts)],inis,last_parse_time,mode)
 	# delete file if expired
 	delete_attachments_if_expired(inis)
 	
@@ -240,11 +239,12 @@ def main(time_interval = 600):
   
 	# delete mail if expired 
 	delete_mail_if_expired(inis)
-  
+	mode_change = 0
 	# start new connection simultaneously
-	threading.Timer(time_interval, main,args=[time_interval,]).start() # in second
+	threading.Timer(time_interval, main,args=[time_interval,mode_change]).start() # in second
 
-def mailget(account,password,inis,last_parse_time):
+				
+def mailget(account,password,inis,last_parse_time,mode):
 	# login
 	mail = imaplib.IMAP4_SSL('imap.gmail.com')
 	#mail.login(inis['account_name'],inis['account_password'])
@@ -306,6 +306,7 @@ def mailget(account,password,inis,last_parse_time):
 					timezone = mail_date[4]
 					
 				# timezone operation
+				timezone_sign = timezone[0]
 				timezone_deltatime = datetime.timedelta(hours = int(timezone[1:3]), minutes = int(timezone[3:]))
 				dt = datetime.datetime(year, month, day, int(time[0]), int(time[1]), int(time[2]))
 				
@@ -314,7 +315,7 @@ def mailget(account,password,inis,last_parse_time):
 				timezone = "UTC " + timezone[:3] + ":" + timezone[3:]
 				
 				# UTC 00:00, for last_time file
-				if timezone[0] == '+':
+				if timezone_sign == '+':
 					dt = dt - timezone_deltatime
 				else:
 					dt = dt + timezone_deltatime
@@ -322,11 +323,26 @@ def mailget(account,password,inis,last_parse_time):
 				if not last_time_saved:
 					# New mail arrived
 					if dt >= last_parse_time :
-						# save last time
-						time_file = open('last_time', 'w')
-						time_file.write(str(mail_date))
+						# get last parsing time
+						try:
+							time_file = open('./last_time', 'r')
+						except IOError:
+							sys.exit("Could not read file : %s" % "./last_time")
+						time_line = time_file.readline().strip('\n')
 						time_file.close()
-					last_time_saved = True
+
+						most_recent_time = datetime.datetime(int(time_line.split('-')[0]),
+											int(time_line.split('-')[1]),
+											int(time_line.split('-')[2].split()[0]),
+											int(time_line.split('-')[2].split()[1].split(":")[0]),
+											int(time_line.split('-')[2].split()[1].split(":")[1]),
+											int(time_line.split('-')[2].split()[1].split(":")[2]))
+						# save last time
+						if most_recent_time <= dt:
+							time_file = open('last_time', 'w')
+							time_file.write(str(dt.strftime('%Y-%m-%d %H:%M:%S')))
+							time_file.close()
+							last_time_saved = True
 				
 				if last_parse_time >= dt :
 					parse_end = True
@@ -389,15 +405,19 @@ def mailget(account,password,inis,last_parse_time):
 
 		mail_one = Mail(from_, to, cc,  mail_date, timezone, title, inner_text, attachment)
 		mailList.append(mail_one)
+		if mode==1:
+			# recentonce mode
+			break
 	
 	# connect to db
+	print("connect to db")
 	conn = pymysql.connect(host=inis['server'],user=inis['user'], password=inis['password'], db=inis['schema'],charset='utf8')
 	curs = conn.cursor()
 
 # filter mail
 	mail_sql = "SELECT filter_id, title_cond, inner_text_cond, sender_cond, slack_channel, filter_name FROM filter ORDER BY filter_id ASC" 
 	curs.execute(mail_sql)
-
+	print("select filter")
 	filters = []
 
 	for (filter_id, title_cond, inner_text_cond, sender_cond, slack_channel,filter_name) in curs:
@@ -445,6 +465,7 @@ def mailget(account,password,inis,last_parse_time):
 			conn.commit()
 			
 			# post on slack
+			print("sendMessage")
 			slackBot.sendPlainMessage(f["slack_channel"], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.timezone, mail_instance.from_, account, mail_instance.attachment, inis['attachment_url'], int(inis['max_text_chars']),f['filter_name'])
 
 	#close the connection
@@ -471,6 +492,7 @@ def run_h():
 	print("\t\t-h : show help command")
 
 def run_t(t):
+	main_first(t)
 	main(t)
 
 def is_int(s):
@@ -483,7 +505,7 @@ def is_int(s):
 if __name__ == "__main__":
 	# without argument
 	if len(sys.argv) == 1:
-		main()
+		main(mode=1)
 
 	# one argument : -i, -h (for -h option, only works alone)
 	elif len(sys.argv) == 2:
@@ -499,7 +521,7 @@ if __name__ == "__main__":
 	# two argument : -t [INT]
 	elif len(sys.argv) == 3:
 		if sys.argv[1] == "-t" and is_int(sys.argv[2]):
-			run_t(int(sys.argv[2]))
+			run_t(time_interval=int(sys.argv[2]),mode=1)
 		else:
 			wrong_parameter()
 
