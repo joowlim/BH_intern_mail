@@ -151,7 +151,12 @@ def deleteMailIfExpired(inis):
 	conn.close()
 	
 def main(time_interval = 600):
-	# initialize logging
+    	# remove logfile if the size exceed 1M
+    	if os.path.exists("./mail.log"):
+		if os.path.getsize("./mail.log") > 10**6:    	
+			open("./mail.log", "w").close()    	
+
+    	# initialize logging
 	logging.basicConfig(filename = "mail.log", level = logging.INFO, format = "%(message)s (%(asctime)s)", datefmt = "%Y/%m/%d %H:%M:%S %Z")
 	logging.info("Mail parsing start!")
 
