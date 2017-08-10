@@ -255,7 +255,7 @@ def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 	message_list.reverse()
 
 	# list of mail instances
-	mailList = []
+	mail_list = []
 	parse_end = False
 
 	last_time_saved = False
@@ -401,7 +401,7 @@ def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 					sys.exit("Could not find directory : %s" % path)
 
 		mail_one = Mail(from_, to, cc,  mail_date, timezone, title, inner_text, attachment)
-		mailList.append(mail_one)
+		mail_list.append(mail_one)
 		if mode==1:
 			# recentonce mode
 			break
@@ -436,10 +436,10 @@ def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 		filters.append(temp_map)
 	
 	for f in filters:
-		mailList.reverse()
-		mailList_filtered = filterMailByDb(mailList, f)
+		mail_list.reverse()
+		mail_list_filtered = filterMailByDb(mail_list, f)
 		
-		for mail_instance in mailList_filtered:
+		for mail_instance in mail_list_filtered:
 			# Update mail table
 			mail_sql = "INSERT INTO mail (title, inner_text, mail_date, filter_id) VALUES (%s, %s, %s, %s)" #datetime.date(y,m,d)
 			curs.execute(mail_sql, (mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, f["filter_id"]))
