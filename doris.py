@@ -1,6 +1,7 @@
 import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading, sys, re, logging
 from email.header import decode_header
 from slacker import Slacker
+from logging.handlers import RotatingFileHandler
 
 month_name_list = ["dummy", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 last_no_mail_reported_time = datetime.datetime.utcnow()
@@ -153,12 +154,22 @@ def deleteMailIfExpired(inis):
 	
 	conn.commit()
 	conn.close()
-  
-def main(time_interval = 610, mode = 0):
-	# initialize logging
-	logging.basicConfig(filename = "mail.log", level = logging.INFO, format = "%(message)s (%(asctime)s)", datefmt = "%Y/%m/%d %H:%M:%S %Z")
-	logging.info("Mail parsing start!")
 
+def main(time_interval = 610, mode = 0):
+  # initialize logging
+	logger = logging.getLogger("mail")
+	logger.setLevel(logging.INFO)
+	
+	handler = RotatingFileHandler("mail.log", maxBytes = 10**6, backupCount = 5)
+	handler.setLevel(logging.INFO)
+    
+	formatter = logging.Formatter("%(message)s (%(asctime)s)", "%Y/%m/%d %H:%M:%S %Z")	
+	handler.setFormatter(formatter)
+
+	logger.addHandler(handler)
+
+	# start mail parsing
+	logger.info("Mail parsing start!")
 	# Open ini file
 	ini_file = open('./user_config.ini', 'r')
 	ini_lines = ini_file.readlines()
@@ -201,7 +212,7 @@ def main(time_interval = 610, mode = 0):
 	deleteAttachmentsIfExpired(inis)
 	
 	# logging
-	logging.info("Mail parsing end!")
+	logger.info("Mail parsing end!")
   
 	# delete mail if expired 	
 	deleteMailIfExpired(inis)
@@ -260,9 +271,6 @@ def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 
 	last_time_saved = False
 
-	# initialize slack bot
-
-	
 	for i in message_list: # messages I want to see
 		typ, msg_data = mail.fetch(i, '(RFC822)')
 		for response_part in msg_data:
