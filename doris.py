@@ -497,7 +497,7 @@ def runH():
 
 
 def runT(t):
-	main(t)
+	main(time_interval = t, mode = 1)
 
 def isInt(s):
 	try: 
@@ -509,7 +509,7 @@ def isInt(s):
 if __name__ == "__main__":
 	# without argument
 	if len(sys.argv) == 1:
-		main(mode=1)
+		main(mode = 1)
 
 	# one argument : -i, -h (for -h option, only works alone)
 	elif len(sys.argv) == 2:
@@ -526,7 +526,7 @@ if __name__ == "__main__":
 	elif len(sys.argv) == 3:
 
 		if sys.argv[1] == "-t" and isInt(sys.argv[2]):
-			runT(time_interval = int(sys.argv[2]), mode=1)
+			runT(time_interval = int(sys.argv[2]))
 
 		else:
 			wrongParameter()
