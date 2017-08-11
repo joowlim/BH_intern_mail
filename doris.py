@@ -6,7 +6,6 @@ from logging.handlers import RotatingFileHandler
 month_name_list = ["dummy", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 last_no_mail_reported_time = datetime.datetime.utcnow()
 
-
 def removeDoubleSpace(text):
 	return re.sub(' +', ' ', text.replace("\t", " "))
 
@@ -145,7 +144,7 @@ def deleteMailIfExpired(inis):
 	
 	mail_duration_day = inis['mail_log_duration_day']
 
-# filter mail
+	# filter mail
 	mail_log_delete_sql = "DELETE FROM mail_log WHERE mail_id in (SELECT mail_id FROM mail WHERE mail_date BETWEEN DATE_SUB(NOW(), INTERVAL " + mail_duration_day + " DAY) AND NOW())"
 	mail_delete_sql = "DELETE FROM mail WHERE mail_date BETWEEN DATE_SUB(NOW(), INTERVAL " + mail_duration_day + " DAY) AND NOW()"
 
@@ -156,7 +155,7 @@ def deleteMailIfExpired(inis):
 	conn.close()
 
 def main(time_interval = 610, mode = 0):
-  # initialize logging
+	# initialize logging
 	logger = logging.getLogger("mail")
 	logger.setLevel(logging.INFO)
 	
@@ -213,7 +212,9 @@ def main(time_interval = 610, mode = 0):
 	
 	# logging
 	logger.info("Mail parsing end!")
-  
+	logger.removeHandler(handler)
+	handler.close()
+	
 	# delete mail if expired 	
 	deleteMailIfExpired(inis)
   
@@ -418,7 +419,7 @@ def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 	conn = pymysql.connect(host = inis['server'],user = inis['user'], password = inis['password'], db = inis['schema'], charset = 'utf8')
 	curs = conn.cursor()
 
-# filter mail
+	# filter mail
 	mail_sql = "SELECT filter_id, title_cond, inner_text_cond, sender_cond, slack_channel, filter_name FROM filter ORDER BY filter_id ASC" 
 	curs.execute(mail_sql)
 	filters = []
