@@ -145,7 +145,7 @@ def deleteMailIfExpired(inis):
 	
 	mail_duration_day = inis['mail_log_duration_day']
 
-# filter mail
+	# filter mail
 	mail_log_delete_sql = "DELETE FROM mail_log WHERE mail_id in (SELECT mail_id FROM mail WHERE mail_date BETWEEN DATE_SUB(NOW(), INTERVAL " + mail_duration_day + " DAY) AND NOW())"
 	mail_delete_sql = "DELETE FROM mail WHERE mail_date BETWEEN DATE_SUB(NOW(), INTERVAL " + mail_duration_day + " DAY) AND NOW()"
 
@@ -156,7 +156,7 @@ def deleteMailIfExpired(inis):
 	conn.close()
 
 def main(time_interval = 610, mode = 0):
-  # initialize logging
+	# initialize logging
 	logger = logging.getLogger("mail")
 	logger.setLevel(logging.INFO)
 	
