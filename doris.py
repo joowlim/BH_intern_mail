@@ -6,6 +6,7 @@ from logging.handlers import RotatingFileHandler
 month_name_list = ["dummy", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 last_no_mail_reported_time = datetime.datetime.utcnow()
 
+
 def removeDoubleSpace(text):
 	return re.sub(' +', ' ', text.replace("\t", " "))
 
@@ -57,10 +58,10 @@ class SlackBot:
 		attach_index = 1
 		if attachment:
 			post_text += "\nAttachment\n"
-		for attach in attachment:
-			attachment_text = "Attachment " + str(attach_index) + " : " + attach
+		for (attach_path, attach_name) in attachment:
+			attachment_text = "Attachment " + str(attach_index) + " : " + attach_name
 			attach_index += 1
-			link_string = "\n<" + attach_url + attach + "|" + attachment_text + ">"
+			link_string = "\n<" + attach_url + attach_path + "|" + attachment_text + ">"
 			post_text += link_string
 			
 		inner_fields = dict()
@@ -144,7 +145,7 @@ def deleteMailIfExpired(inis):
 	
 	mail_duration_day = inis['mail_log_duration_day']
 
-	# filter mail
+# filter mail
 	mail_log_delete_sql = "DELETE FROM mail_log WHERE mail_id in (SELECT mail_id FROM mail WHERE mail_date BETWEEN DATE_SUB(NOW(), INTERVAL " + mail_duration_day + " DAY) AND NOW())"
 	mail_delete_sql = "DELETE FROM mail WHERE mail_date BETWEEN DATE_SUB(NOW(), INTERVAL " + mail_duration_day + " DAY) AND NOW()"
 
@@ -155,7 +156,7 @@ def deleteMailIfExpired(inis):
 	conn.close()
 
 def main(time_interval = 610, mode = 0):
-	# initialize logging
+  # initialize logging
 	logger = logging.getLogger("mail")
 	logger.setLevel(logging.INFO)
 	
@@ -212,9 +213,7 @@ def main(time_interval = 610, mode = 0):
 	
 	# logging
 	logger.info("Mail parsing end!")
-	logger.removeHandler(handler)
-	handler.close()
-	
+  
 	# delete mail if expired 	
 	deleteMailIfExpired(inis)
   
@@ -394,6 +393,9 @@ def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 				splited_filename = filename[1:].split('?')
 				if filename[:10] == "=?UTF-8?B?" or filename[:10] == "=?utf-8?B?":
 					filename = base64.b64decode(filename[10:]).decode('utf-8')
+				
+				filename_origin = filename
+				filename = "_" + filename
 				if os.path.exists(path + filename):
 					# create numbering
 					file_index = 1
@@ -404,14 +406,14 @@ def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 					filename = make_file_name(filename, file_index)
 				try:
 					with open(os.path.join(path, filename), 'wb') as fp:
-						attachment.append(filename)
+						attachment.append([filename, filename_origin])
 						fp.write(part.get_payload(decode = True))
 				except IOError:
 					sys.exit("Could not find directory : %s" % path)
 
 		mail_one = Mail(from_, to, cc,  mail_date, timezone, title, inner_text, attachment)
 		mail_list.append(mail_one)
-		if mode==1:
+		if mode == 1:
 			# recentonce mode
 			break
 	
@@ -465,9 +467,14 @@ def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 				mail_log_sql = "INSERT INTO mail_log (sender, receiver, mail_id, is_ref) VALUES (%s, %s, %s, %s)"
 				curs.execute(mail_log_sql, (mail_instance.from_, receiver, str(current_row_id), 1))
 
-
 			# commit the connection
 			conn.commit()
+			
+			# update file name
+			for attachment_index in range(len(mail_instance.attachment)):
+				new_filename = str(current_row_id) + mail_instance.attachment[attachment_index][0]
+				os.rename(inis['attachment_path'] + mail_instance.attachment[attachment_index][0], inis['attachment_path'] +  new_filename)
+				mail_instance.attachment[attachment_index][0] = new_filename
 			
 			# post on slack
 			slackBot.sendPlainMessage(f["slack_channel"], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.timezone, mail_instance.from_, account, mail_instance.attachment, inis['attachment_url'], int(inis['max_text_chars']), f['filter_name'])
