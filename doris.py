@@ -526,7 +526,7 @@ if __name__ == "__main__":
 	elif len(sys.argv) == 3:
 
 		if sys.argv[1] == "-t" and isInt(sys.argv[2]):
-			runT(time_interval = int(sys.argv[2]))
+			runT(int(sys.argv[2]))
 
 		else:
 			wrongParameter()
