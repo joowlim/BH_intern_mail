@@ -210,13 +210,15 @@ def main(time_interval = 610, mode = 0):
 
 	# delete file if expired
 	deleteAttachmentsIfExpired(inis)
-	
+
 	# logging
 	logger.info("Mail parsing end!")
-  
+	logger.removeHandler(handler)
+	handler.close()
+	
 	# delete mail if expired 	
 	deleteMailIfExpired(inis)
-  
+
 	# report if no mail entire day
 	checkNoMailEntireDay(slackBot,inis)
 
