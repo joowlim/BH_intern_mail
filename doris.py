@@ -1,4 +1,11 @@
-import imaplib, email, base64, mimetypes, os, datetime, pymysql, threading, sys, re, logging
+import sys, os
+
+# Import submodule
+scriptpath = "./csv_parsing/"
+sys.path.append(os.path.abspath(scriptpath))
+
+import imaplib, email, base64, mimetypes, datetime, pymysql, threading, re, logging
+from csv_parsing import ParsedValue
 from email.header import decode_header
 from slacker import Slacker
 from logging.handlers import RotatingFileHandler
@@ -477,7 +484,12 @@ def mailGet(account, password, inis, last_parse_time, slackBot, mode):
 				new_filename = str(current_row_id) + mail_instance.attachment[attachment_index][0]
 				os.rename(inis['attachment_path'] + mail_instance.attachment[attachment_index][0], inis['attachment_path'] +  new_filename)
 				mail_instance.attachment[attachment_index][0] = new_filename
-			
+				
+				file_extension = new_filename.split(".")[-1]
+				if file_extension == "csv" or file_extension == "tsv" or file_extension == "xlsx":
+					parsed_value = ParsedValue(inis['attachment_path'] +  new_filename)
+					parsed_value.parse_to_insert()
+
 			# post on slack
 			slackBot.sendPlainMessage(f["slack_channel"], mail_instance.title, mail_instance.inner_text, mail_instance.mail_date, mail_instance.timezone, mail_instance.from_, account, mail_instance.attachment, inis['attachment_url'], int(inis['max_text_chars']), f['filter_name'])
 
